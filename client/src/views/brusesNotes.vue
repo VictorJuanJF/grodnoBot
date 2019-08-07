@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>Notas bruses de 22</h1>
+    <h1>Notas bruses de 222</h1>
   </div>
 </template>
 

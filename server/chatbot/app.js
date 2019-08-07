@@ -4,11 +4,12 @@
 ////
 const dialogflow = require('dialogflow');
 const config = require('./config');
-// const express = require('express');
+const express = require('express');
 const crypto = require('crypto');
 const bodyParser = require('body-parser');
 const request = require('request');
-// const app = express();
+const app = express();
+const router = express.Router();
 const uuid = require('uuid');
 
 
@@ -41,22 +42,22 @@ if (!config.SERVER_URL) { //used for ink to static files
 
 
 // app.set('port', (process.env.PORT || 5000))
-console.log("Ejecutando el proyecto del chatbot");
+
 //verify request came from facebook
-// app.use(bodyParser.json({
-//     verify: verifyRequestSignature
-// }));
+app.use(bodyParser.json({
+    verify: verifyRequestSignature
+}));
 
 //serve static files in the public directory
 // app.use(express.static('public'));
 
 // Process application/x-www-form-urlencoded
-// app.use(bodyParser.urlencoded({
-//     extended: false
-// }));
+app.use(bodyParser.urlencoded({
+    extended: false
+}));
 
 // Process application/json
-// app.use(bodyParser.json());
+app.use(bodyParser.json());
 
 
 
@@ -76,21 +77,22 @@ const sessionClient = new dialogflow.SessionsClient({
 
 const sessionIds = new Map();
 
-// // Index route
+// Index route
 // app.get('/', function(req, res) {
 //     res.send('Hello world, I am a chat bot')
 // })
 
 // for Facebook verification
-// app.get('/webhook/', function(req, res) {
-//     console.log("request");
-//     if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === config.FB_VERIFY_TOKEN) {
-//         res.status(200).send(req.query['hub.challenge']);
-//     } else {
-//         console.error("Failed validation. Make sure the validation tokens match.");
-//         res.sendStatus(403);
-//     }
-// })
+router.get('/webhook/', function(req, res) {
+    console.log("se entro al webhook de app");
+    console.log("request");
+    if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === config.FB_VERIFY_TOKEN) {
+        res.status(200).send(req.query['hub.challenge']);
+    } else {
+        console.error("Failed validation. Make sure the validation tokens match.");
+        res.sendStatus(403);
+    }
+})
 
 /*
  * All callbacks for Messenger are POST-ed. They will be sent to the same
@@ -99,45 +101,45 @@ const sessionIds = new Map();
  * https://developers.facebook.com/docs/messenger-platform/product-overview/setup#subscribe_app
  *
  */
-// app.post('/webhook/', function(req, res) {
-//     var data = req.body;
-//     console.log(JSON.stringify(data));
+router.post('/webhook/', function(req, res) {
+    var data = req.body;
+    console.log(JSON.stringify(data));
 
 
 
-//     // Make sure this is a page subscription
-//     if (data.object == 'page') {
-//         // Iterate over each entry
-//         // There may be multiple if batched
-//         data.entry.forEach(function(pageEntry) {
-//             var pageID = pageEntry.id;
-//             var timeOfEvent = pageEntry.time;
+    // Make sure this is a page subscription
+    if (data.object == 'page') {
+        // Iterate over each entry
+        // There may be multiple if batched
+        data.entry.forEach(function(pageEntry) {
+            var pageID = pageEntry.id;
+            var timeOfEvent = pageEntry.time;
 
-//             // Iterate over each messaging event
-//             pageEntry.messaging.forEach(function(messagingEvent) {
-//                 if (messagingEvent.optin) {
-//                     receivedAuthentication(messagingEvent);
-//                 } else if (messagingEvent.message) {
-//                     receivedMessage(messagingEvent);
-//                 } else if (messagingEvent.delivery) {
-//                     receivedDeliveryConfirmation(messagingEvent);
-//                 } else if (messagingEvent.postback) {
-//                     receivedPostback(messagingEvent);
-//                 } else if (messagingEvent.read) {
-//                     receivedMessageRead(messagingEvent);
-//                 } else if (messagingEvent.account_linking) {
-//                     receivedAccountLink(messagingEvent);
-//                 } else {
-//                     console.log("Webhook received unknown messagingEvent: ", messagingEvent);
-//                 }
-//             });
-//         });
+            // Iterate over each messaging event
+            pageEntry.messaging.forEach(function(messagingEvent) {
+                if (messagingEvent.optin) {
+                    receivedAuthentication(messagingEvent);
+                } else if (messagingEvent.message) {
+                    receivedMessage(messagingEvent);
+                } else if (messagingEvent.delivery) {
+                    receivedDeliveryConfirmation(messagingEvent);
+                } else if (messagingEvent.postback) {
+                    receivedPostback(messagingEvent);
+                } else if (messagingEvent.read) {
+                    receivedMessageRead(messagingEvent);
+                } else if (messagingEvent.account_linking) {
+                    receivedAccountLink(messagingEvent);
+                } else {
+                    console.log("Webhook received unknown messagingEvent: ", messagingEvent);
+                }
+            });
+        });
 
-//         // Assume all went well.
-//         // You must send back a 200, within 20 seconds
-//         res.sendStatus(200);
-//     }
-// });
+        // Assume all went well.
+        // You must send back a 200, within 20 seconds
+        res.sendStatus(200);
+    }
+});
 
 
 
@@ -858,3 +860,9 @@ function isDefined(obj) {
 
     return obj != null;
 }
+
+// // Spin up the server
+// app.listen(app.get('port'), function() {
+//     console.log('running on port', app.get('port'))
+// })
+module.exports = router;

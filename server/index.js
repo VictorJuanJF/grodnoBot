@@ -17,7 +17,7 @@ app.use(bodyParser.json())
 app.use(cors());
 
 const routes = require('./routes/api/api.js');
-const webhook = require('./routes/webhook.js');
+const webhook = require('./chatbot/app.js');
 app.use('/api', routes);
 app.use('/api', webhook);
 

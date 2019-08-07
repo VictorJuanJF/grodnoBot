@@ -66,23 +66,21 @@ const credentials = {
     private_key: config.GOOGLE_PRIVATE_KEY,
 };
 
-const sessionClient = new dialogflow.SessionsClient(
-    {
-        projectId: config.GOOGLE_PROJECT_ID,
-        credentials
-    }
-);
+const sessionClient = new dialogflow.SessionsClient({
+    projectId: config.GOOGLE_PROJECT_ID,
+    credentials
+});
 
 
 const sessionIds = new Map();
 
 // Index route
-app.get('/', function (req, res) {
+app.get('/', function(req, res) {
     res.send('Hello world, I am a chat bot')
 })
 
 // for Facebook verification
-app.get('/webhook/', function (req, res) {
+app.get('/webhook/', function(req, res) {
     console.log("request");
     if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === config.FB_VERIFY_TOKEN) {
         res.status(200).send(req.query['hub.challenge']);
@@ -99,7 +97,7 @@ app.get('/webhook/', function (req, res) {
  * https://developers.facebook.com/docs/messenger-platform/product-overview/setup#subscribe_app
  *
  */
-app.post('/webhook/', function (req, res) {
+app.post('/webhook/', function(req, res) {
     var data = req.body;
     console.log(JSON.stringify(data));
 
@@ -109,12 +107,12 @@ app.post('/webhook/', function (req, res) {
     if (data.object == 'page') {
         // Iterate over each entry
         // There may be multiple if batched
-        data.entry.forEach(function (pageEntry) {
+        data.entry.forEach(function(pageEntry) {
             var pageID = pageEntry.id;
             var timeOfEvent = pageEntry.time;
 
             // Iterate over each messaging event
-            pageEntry.messaging.forEach(function (messagingEvent) {
+            pageEntry.messaging.forEach(function(messagingEvent) {
                 if (messagingEvent.optin) {
                     receivedAuthentication(messagingEvent);
                 } else if (messagingEvent.message) {
@@ -184,7 +182,7 @@ function receivedMessage(event) {
 }
 
 
-function handleMessageAttachments(messageAttachments, senderID){
+function handleMessageAttachments(messageAttachments, senderID) {
     //for now just reply
     sendTextMessage(senderID, "Attachment received. Thank you.");
 }
@@ -205,7 +203,7 @@ function handleEcho(messageId, appId, metadata) {
 function handleDialogFlowAction(sender, action, messages, contexts, parameters) {
     switch (action) {
         default:
-            //unhandled action, just send back the text
+        //unhandled action, just send back the text
             handleMessages(messages, sender);
     }
 }
@@ -222,12 +220,11 @@ function handleMessage(message, sender) {
         case "quickReplies": //quick replies
             let replies = [];
             message.quickReplies.quickReplies.forEach((text) => {
-                let reply =
-                    {
-                        "content_type": "text",
-                        "title": text,
-                        "payload": text
-                    }
+                let reply = {
+                    "content_type": "text",
+                    "title": text,
+                    "payload": text
+                }
                 replies.push(reply);
             });
             sendQuickReply(sender, message.quickReplies.title, replies);
@@ -267,7 +264,7 @@ function handleCardMessages(messages, sender) {
 
         let element = {
             "title": message.card.title,
-            "image_url":message.card.imageUri,
+            "image_url": message.card.imageUri,
             "subtitle": message.card.subtitle,
             "buttons": buttons
         };
@@ -279,25 +276,25 @@ function handleCardMessages(messages, sender) {
 
 function handleMessages(messages, sender) {
     let timeoutInterval = 1100;
-    let previousType ;
+    let previousType;
     let cardTypes = [];
     let timeout = 0;
     for (var i = 0; i < messages.length; i++) {
 
-        if ( previousType == "card" && (messages[i].message != "card" || i == messages.length - 1)) {
+        if (previousType == "card" && (messages[i].message != "card" || i == messages.length - 1)) {
             timeout = (i - 1) * timeoutInterval;
             setTimeout(handleCardMessages.bind(null, cardTypes, sender), timeout);
             cardTypes = [];
             timeout = i * timeoutInterval;
             setTimeout(handleMessage.bind(null, messages[i], sender), timeout);
-        } else if ( messages[i].message == "card" && i == messages.length - 1) {
+        } else if (messages[i].message == "card" && i == messages.length - 1) {
             cardTypes.push(messages[i]);
             timeout = (i - 1) * timeoutInterval;
             setTimeout(handleCardMessages.bind(null, cardTypes, sender), timeout);
             cardTypes = [];
-        } else if ( messages[i].message == "card") {
+        } else if (messages[i].message == "card") {
             cardTypes.push(messages[i]);
-        } else  {
+        } else {
 
             timeout = i * timeoutInterval;
             setTimeout(handleMessage.bind(null, messages[i], sender), timeout);
@@ -324,7 +321,7 @@ function handleDialogFlowResponse(sender, response) {
         handleMessages(messages, sender);
     } else if (responseText == '' && !isDefined(action)) {
         //dialogflow could not evaluate input.
-        sendTextMessage(sender, "I'm not sure what you want. Can you be more specific?");
+        sendTextMessage(sender, "I'm not sure what you want. Can you be more specific? gaa");
     } else if (isDefined(responseText)) {
         sendTextMessage(sender, responseText);
     }
@@ -538,7 +535,7 @@ function sendGenericMessage(recipientId, elements) {
 
 
 function sendReceiptMessage(recipientId, recipient_name, currency, payment_method,
-                            timestamp, elements, address, summary, adjustments) {
+    timestamp, elements, address, summary, adjustments) {
     // Generate a random receipt ID as the API requires a unique ID
     var receiptId = "order" + Math.floor(Math.random() * 1000);
 
@@ -579,7 +576,7 @@ function sendQuickReply(recipientId, text, replies, metadata) {
         },
         message: {
             text: text,
-            metadata: isDefined(metadata)?metadata:'',
+            metadata: isDefined(metadata) ? metadata : '',
             quick_replies: replies
         }
     };
@@ -678,7 +675,7 @@ function callSendAPI(messageData) {
         method: 'POST',
         json: messageData
 
-    }, function (error, response, body) {
+    }, function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var recipientId = body.recipient_id;
             var messageId = body.message_id;
@@ -716,9 +713,9 @@ function receivedPostback(event) {
 
     switch (payload) {
         default:
-            //unindentified payload
+        //unindentified payload
             sendTextMessage(senderID, "I'm not sure what you want. Can you be more specific?");
-            break;
+        break;
 
     }
 
@@ -782,7 +779,7 @@ function receivedDeliveryConfirmation(event) {
     var sequenceNumber = delivery.seq;
 
     if (messageIDs) {
-        messageIDs.forEach(function (messageID) {
+        messageIDs.forEach(function(messageID) {
             console.log("Received delivery confirmation for message ID: %s",
                 messageID);
         });
@@ -861,6 +858,6 @@ function isDefined(obj) {
 }
 
 // Spin up the server
-app.listen(app.get('port'), function () {
+app.listen(app.get('port'), function() {
     console.log('running on port', app.get('port'))
 })

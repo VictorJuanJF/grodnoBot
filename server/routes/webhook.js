@@ -4,6 +4,7 @@ const config = require('../chatbot/config.js')
 
 
 router.get('/webhook/', function(req, res) {
+    console.log("se hizo un get al webhook br");
     console.log("request");
     if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === config.FB_VERIFY_TOKEN) {
         res.status(200).send(req.query['hub.challenge']);
@@ -14,6 +15,7 @@ router.get('/webhook/', function(req, res) {
 })
 
 router.post('/webhook/', function(req, res) {
+    console.log("Se hizo un post al webhook br");
     var data = req.body;
     console.log(JSON.stringify(data));
 

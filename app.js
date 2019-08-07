@@ -714,7 +714,7 @@ function receivedPostback(event) {
     switch (payload) {
         default:
         //unindentified payload
-            sendTextMessage(senderID, "I'm not sure what you want. Can you be more specific?");
+            sendTextMessage(senderID, "I'm not sure what you want. Can you be more specific? gaa");
         break;
 
     }

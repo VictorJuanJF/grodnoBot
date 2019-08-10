@@ -328,8 +328,9 @@ function handleDialogFlowResponse(sender, response) {
         console.log("se planea entrar al action sin action :v", action);
         handleDialogFlowAction(sender, action, messages, contexts, parameters);
     } else if (isDefined(messages)) {
+        console.log("se enviaran estos mensajes: ", messages);
         console.log("se entrara a handleMessage desde HandleDialogFlowResponse");
-        handleMessages(messages, sender);
+        // handleMessages(messages, sender);
     } else if (responseText == '' && !isDefined(action)) {
         //dialogflow could not evaluate input.
         sendTextMessage(sender, "I'm not sure what you want. Can you be more specific? gaa");

@@ -11,13 +11,13 @@ export default new Router({
         path: '/',
         component: require('./views/dashboard.vue').default,
         children: [{
-            path: '/notas-bruses',
-            name: 'brusesNotes',
-            component: require('./views/brusesNotes.vue').default
+            path: '/intenciones',
+            name: 'intent',
+            component: require('./views/intent.vue').default
         }, {
-            path: '/notas-bruses2',
-            name: 'brusesNotes2',
-            component: require('./views/brusesNotes2.vue').default
+            path: '/intenciones/:id',
+            name: 'updateIntent',
+            component: require('./views/updateIntent.vue').default
         }]
     }]
 })

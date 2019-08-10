@@ -1,37 +1,42 @@
 const express = require('express');
 const router = express.Router();
-//models
-const Goal = require('../../models/goals.js');
+const {
+    listIntents,
+    updateIntent
+} = require('../../chatbot/dialogFlowApiFunctions')
+const axios = require('axios');
 
-//Controllers
-const goal_controller = require('../../controllers/goalController.js')
-    //tools
-const dateTools = require("../../tools/dateTools.js")
+//chatbot
 
-//Goals routes
-router.get('/goals', (req, res) => {
-    console.log("se hizo un get a goals");
-    // Goal.find({
-    //     date: {
-    //         $gte: dateTools.todayStartMilliseconds(Date.now()),
-    //         $lte: dateTools.todayEndMilliseconds(Date.now()),
-    //     }
-    // }).exec((err, goals) => {
-    //     if (err) {
-    //         return res.status(400).json({
-    //             ok: false,
-    //             err
-    //         })
-    //     }
-    //     res.json({
-    //         ok: true,
-    //         goals
-    //     })
-    // });
+router.get('/chatbot/agent/intents', (req, res) => {
+    try {
+        let payload = listIntents((callback) => {
+            res.json({
+                ok: true,
+                payload: callback
+            });
+        });
+    } catch (e) {
+        console.log("hubo un error:", e);
+        // next(e);
+    }
 });
-router.post('/goals', goal_controller.goal_create);
-router.put('/goal/:id', goal_controller.goal_update);
-router.delete('/goal/:id', goal_controller.goal_delete);
+//update intent
+router.put('/chatbot/agent/intents/update', (req, res) => {
+    let newIntent = req.body.newIntent;
+    try {
+        let payload = updateIntent(newIntent, (callback) => {
+            res.json({
+                ok: true,
+                payload: callback
+            });
+        });
+    } catch (e) {
+        console.log("hubo un error:", e);
+        // next(e);
+    }
+});
+
 
 
 module.exports = router;

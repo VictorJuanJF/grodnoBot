@@ -11,6 +11,11 @@ const request = require('request');
 const app = express();
 const router = express.Router();
 const uuid = require('uuid');
+// Facebook me da payloads (botones,carrusel,etc) en protocolo struct, con la libreria
+//de abajo puedo desestructuarlo y mandarlo a graph api
+const {
+    structProtoToJson
+} = require('./structFunctions');
 
 
 // Messenger API parameters
@@ -218,7 +223,6 @@ function handleMessage(message, sender) {
         case "text": //text
             message.text.text.forEach((text) => {
                 if (text !== '') {
-                    console.log("se entro al if de handleMessage");
                     sendTextMessage(sender, text);
                 }
             });
@@ -237,6 +241,17 @@ function handleMessage(message, sender) {
             break;
         case "image": //image
             sendImageMessage(sender, message.image.imageUri);
+            break;
+        case "payload":
+            let desestructPayload = structProtoToJson(message.payload);
+            var messageData = {
+                recipient: {
+                    id: sender
+                },
+                message: desestructPayload.facebook
+
+            };
+            callSendAPI(messageData);
             break;
     }
 }
@@ -325,18 +340,13 @@ function handleDialogFlowResponse(sender, response) {
     sendTypingOff(sender);
 
     if (isDefined(action)) {
-        console.log("se planea entrar al action sin action :v", action);
         handleDialogFlowAction(sender, action, messages, contexts, parameters);
     } else if (isDefined(messages)) {
-        console.log("se enviaran estos mensajes: ", messages);
-        console.log("se entrara a handleMessage desde HandleDialogFlowResponse");
-        // handleMessages(messages, sender);
+        handleMessages(messages, sender);
     } else if (responseText == '' && !isDefined(action)) {
         //dialogflow could not evaluate input.
         sendTextMessage(sender, "I'm not sure what you want. Can you be more specific? gaa");
     } else if (isDefined(responseText)) {
-        console.log("la cantidad es: ", 0);
-        console.log("se cumplio la condicion de response text: ", cantidad);
         sendTextMessage(sender, responseText);
     }
 }
@@ -368,6 +378,13 @@ async function sendToDialogFlow(sender, textString, params) {
         const responses = await sessionClient.detectIntent(request);
 
         const result = responses[0].queryResult;
+        let defaultResponses = [];
+        result.fulfillmentMessages.forEach(element => {
+            if (element.platform == 'PLATFORM_UNSPECIFIED') {
+                defaultResponses.push(element);
+            }
+        });
+        result.fulfillmentMessages = defaultResponses;
         handleDialogFlowResponse(sender, result);
     } catch (e) {
         console.log('error');

@@ -1,6 +1,25 @@
 const dialogflow = require('dialogflow');
 const uuid = require('uuid');
 const config = require('./config.js');
+/**
+ *
+ *
+ * @param {*} name represent full path from parent to intent
+ */
+function extractIntentId(name) {
+    let basePath = `projects/${config.GOOGLE_PROJECT_ID}/agent/intents/`;
+    let intentId = name.substring(name.lastIndexOf('/') + 1, name.length);
+    return intentId;
+}
+
+// Instantiates clients
+const intentsClient = new dialogflow.IntentsClient({
+    projectId: config.GOOGLE_PROJECT_ID,
+    keyFilename: config.KEYFILENAME,
+});
+
+// The path to identify the agent that owns the intents.
+const projectAgentPath = intentsClient.projectAgentPath(config.GOOGLE_PROJECT_ID);
 
 /**
  * Send a query to the dialogflow agent, and return the query result.
@@ -42,22 +61,10 @@ async function runSample(projectId) {
     }
 }
 async function createIntent(
-    projectId,
     displayName,
     trainingPhrasesParts,
     messageTexts
 ) {
-    console.log("empezando la creacion del intent");
-    // [START dialogflow_create_intent]
-    // Imports the Dialogflow library
-    const dialogflow = require('dialogflow');
-
-    // Instantiates the Intent Client
-    const intentsClient = new dialogflow.IntentsClient();
-
-    // The path to identify the agent that owns the created intent.
-    const agentPath = intentsClient.projectAgentPath(projectId);
-
     const trainingPhrases = [];
 
     trainingPhrasesParts.forEach(trainingPhrasesPart => {
@@ -74,6 +81,9 @@ async function createIntent(
         trainingPhrases.push(trainingPhrase);
     });
     console.log("el listado de frases entrenadas: ", trainingPhrases);
+    // createIntent('AmiIntentDesdeApi6', ['Hola que tal', 'Como estas', 'Brus Harper'], [
+    //     'que pasa', 'como te va',
+    // ]);
 
     const messageText = {
         text: messageTexts,
@@ -92,7 +102,7 @@ async function createIntent(
     console.log("las respuestas son: ", JSON.stringify(message));
 
     const createIntentRequest = {
-        parent: agentPath,
+        parent: projectAgentPath,
         intent: intent,
     };
 
@@ -124,44 +134,23 @@ async function deleteIntent(projectId, intentId) {
     // [END dialogflow_delete_intent]
 }
 
-async function listIntents(projectId) {
-    // [START dialogflow_list_intents]
-    // Imports the Dialogflow library
-    const dialogflow = require('dialogflow');
-
-    // Instantiates clients
-    const intentsClient = new dialogflow.IntentsClient();
-
-    // The path to identify the agent that owns the intents.
-    const projectAgentPath = intentsClient.projectAgentPath(projectId);
-
+const listIntents = async(callback) => {
     const request = {
         parent: projectAgentPath,
+        intentView: 'INTENT_VIEW_FULL'
     };
-
-    console.log(projectAgentPath);
-
-    // Send the request for listing intents.
     const [response] = await intentsClient.listIntents(request);
-    response.forEach(intent => {
-        console.log('====================');
-        console.log(`Intent name: ${intent.name}`);
-        console.log(`Intent display name: ${intent.displayName}`);
-        console.log(`Action: ${intent.action}`);
-        console.log(`Root folowup intent: ${intent.rootFollowupIntentName}`);
-        console.log(`Parent followup intent: ${intent.parentFollowupIntentName}`);
+    callback(response);
+}
 
-        console.log('Input contexts:');
-        intent.inputContextNames.forEach(inputContextName => {
-            console.log(`\tName: ${inputContextName}`);
-        });
-
-        console.log('Output contexts:');
-        intent.outputContexts.forEach(outputContext => {
-            console.log(`\tName: ${outputContext.name}`);
-        });
-    });
-    // [END dialogflow_list_intents]
+const updateIntent = async(newIntent, callback) => {
+    console.log("se entro a actualizar intent");
+    const request = {
+        intent: newIntent,
+        // parent: projectAgentPath,
+    };
+    const [response] = await intentsClient.updateIntent(request);
+    callback(response);
 }
 
 async function listEntities(projectId, entityTypeId) {
@@ -274,7 +263,12 @@ async function listEntityTypes(projectId) {
     // [END dialogflow_list_entity_types]
 }
 
-listEntityTypes(config.GOOGLE_PROJECT_ID, )
+
+module.exports = {
+    listIntents,
+    updateIntent
+}
+
 
 // listIntents(config.GOOGLE_PROJECT_ID);
 

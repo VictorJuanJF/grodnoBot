@@ -217,6 +217,7 @@ function handleMessage(message, sender) {
         case "text": //text
             message.text.text.forEach((text) => {
                 if (text !== '') {
+                    console.log("se entro al if de handleMessage");
                     sendTextMessage(sender, text);
                 }
             });
@@ -309,9 +310,10 @@ function handleMessages(messages, sender) {
     }
 }
 
+let cantidad = 0;
+
 function handleDialogFlowResponse(sender, response) {
     let responseText = response.fulfillmentMessages.fulfillmentText;
-
     let messages = response.fulfillmentMessages;
     let action = response.action;
     let contexts = response.outputContexts;
@@ -327,6 +329,8 @@ function handleDialogFlowResponse(sender, response) {
         //dialogflow could not evaluate input.
         sendTextMessage(sender, "I'm not sure what you want. Can you be more specific? gaa");
     } else if (isDefined(responseText)) {
+        console.log("la cantidad es: ", 0);
+        console.log("se cumplio la condicion de response text: ", cantidad);
         sendTextMessage(sender, responseText);
     }
 }

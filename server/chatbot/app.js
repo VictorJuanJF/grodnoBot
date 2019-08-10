@@ -208,7 +208,7 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
     switch (action) {
         default:
         //unhandled action, just send back the text
-            handleMessages(messages, sender);
+        // handleMessages(messages, sender);
     }
 }
 
@@ -322,6 +322,7 @@ function handleDialogFlowResponse(sender, response) {
     sendTypingOff(sender);
 
     if (isDefined(action)) {
+        console.log("se planea entrar al action sin action :v", action);
         handleDialogFlowAction(sender, action, messages, contexts, parameters);
     } else if (isDefined(messages)) {
         handleMessages(messages, sender);

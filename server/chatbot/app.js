@@ -208,13 +208,16 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
     switch (action) {
         default:
         //unhandled action, just send back the text
-        // handleMessages(messages, sender);
+            console.log("se mandara el mensaje por defecto de handleDialogFlowAction");
+        handleMessages(messages, sender);
     }
 }
 
 function handleMessage(message, sender) {
     switch (message.message) {
         case "text": //text
+            console.log("se hara un foreach de: ", message.text.text);
+            console.log("se hara un foreach stringy de: ", JSON.stringify(message.text.text));
             message.text.text.forEach((text) => {
                 if (text !== '') {
                     console.log("se entro al if de handleMessage");
@@ -325,6 +328,7 @@ function handleDialogFlowResponse(sender, response) {
         console.log("se planea entrar al action sin action :v", action);
         handleDialogFlowAction(sender, action, messages, contexts, parameters);
     } else if (isDefined(messages)) {
+        console.log("se entrara a handleMessage desde HandleDialogFlowResponse");
         handleMessages(messages, sender);
     } else if (responseText == '' && !isDefined(action)) {
         //dialogflow could not evaluate input.

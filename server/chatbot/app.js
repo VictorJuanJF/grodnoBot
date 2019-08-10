@@ -216,8 +216,6 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
 function handleMessage(message, sender) {
     switch (message.message) {
         case "text": //text
-            console.log("se hara un foreach de: ", message.text.text);
-            console.log("se hara un foreach stringy de: ", JSON.stringify(message.text.text));
             message.text.text.forEach((text) => {
                 if (text !== '') {
                     console.log("se entro al if de handleMessage");
@@ -294,6 +292,7 @@ function handleMessages(messages, sender) {
             setTimeout(handleCardMessages.bind(null, cardTypes, sender), timeout);
             cardTypes = [];
             timeout = i * timeoutInterval;
+            console.log("se cumplio la primera condificion de handlemessages");
             setTimeout(handleMessage.bind(null, messages[i], sender), timeout);
         } else if (messages[i].message == "card" && i == messages.length - 1) {
             cardTypes.push(messages[i]);
@@ -305,6 +304,7 @@ function handleMessages(messages, sender) {
         } else {
 
             timeout = i * timeoutInterval;
+            console.log("se cumplio la segunda condificion de handlemessages");
             setTimeout(handleMessage.bind(null, messages[i], sender), timeout);
         }
 

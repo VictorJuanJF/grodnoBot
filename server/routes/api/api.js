@@ -134,7 +134,8 @@ router.post('/chatbot/agent/persistantmenu', (req, res) => {
                 ok: true,
                 payload: 'Persistant menu updated'
             });
-            fs.writeFile(__dirname + '/../../public/menu/persistantMenu.json', JSON.stringify(buttons), function(err) {
+            console.log('respuesta de facebook: ', response);
+            fs.writeFile(__dirname + '/../../chatbot/menu/persistantMenu.json', JSON.stringify(buttons), function(err) {
                 if (err) throw err;
                 console.log('complete saved file');
             });
@@ -149,7 +150,7 @@ router.post('/chatbot/agent/persistantmenu', (req, res) => {
 
 router.get('/chatbot/agent/persistantmenu/list', (req, res) => {
     try {
-        let rawdata = fs.readFileSync(__dirname + '/../../public/menu/persistantMenu.json');
+        let rawdata = fs.readFileSync(__dirname + '/../../chatbot/menu/persistantMenu.json');
         rawdata = JSON.parse(rawdata);
         if (rawdata) {
             res.json({

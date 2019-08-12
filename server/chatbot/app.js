@@ -71,9 +71,7 @@ app.use(bodyParser.json());
 //maps
 const sessionIds = new Map();
 const usersMap = new Map();
-
-
-
+const privacyPolicy = new Map();
 
 const credentials = {
     client_email: config.GOOGLE_CLIENT_EMAIL,
@@ -150,17 +148,48 @@ router.post('/webhook/', function(req, res) {
     }
 });
 
-function setSessionAndUser(senderID) {
-    console.log('Se entro a set SessionAndUser');
+function setSessionAndUser(senderID, callback) {
     if (!sessionIds.has(senderID)) {
+        console.log("se cumplio la primera condicion");
         sessionIds.set(senderID, uuid.v1());
     }
-
     if (!usersMap.has(senderID)) {
-        userService.addUser(function(user) {
-            usersMap.set(senderID, user);
+        console.log("empezando la segunda condicion");
+        usersMap.set(senderID, uuid.v1());
+        userService.addUser((err, user) => {
+            if (err) {
+                console.log("algo salio mal agregando al usuario..", err);
+            } else {
+                usersMap.set(senderID, user);
+                console.log("se termino de resolver el add user");
+                callback(true);
+            }
         }, senderID);
+    } else {
+        console.log("no paso nada y se mando callback true");
+        callback(true);
     }
+}
+
+function verifyPrivacyPolicy(senderID) {
+    console.log("se empezara a verificar las politicas");
+    return new Promise((resolve, reject) => {
+        if (privacyPolicy.has(senderID)) {
+            resolve(privacyPolicy.get(senderID));
+        } else {
+            userService.getPrivacyPolicyStatus(senderID, (err, res) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    privacyPolicy.set(senderID, res);
+                    console.log("estado de las politicas: ", privacyPolicy.get(senderID));
+
+                    resolve(privacyPolicy.get(senderID));
+                }
+
+            });
+        }
+    });
 }
 
 function receivedMessage(event) {
@@ -169,8 +198,6 @@ function receivedMessage(event) {
     var recipientID = event.recipient.id;
     var timeOfMessage = event.timestamp;
     var message = event.message;
-
-    setSessionAndUser(senderID);
     //console.log("Received message for user %d and page %d at %d with message:", senderID, recipientID, timeOfMessage);
     //console.log(JSON.stringify(message));
 
@@ -183,6 +210,7 @@ function receivedMessage(event) {
     var messageText = message.text;
     var messageAttachments = message.attachments;
     var quickReply = message.quick_reply;
+    console.log("se recibio el mensaje: ", messageText);
 
     if (isEcho) {
         handleEcho(messageId, appId, metadata);
@@ -221,7 +249,6 @@ function handleEcho(messageId, appId, metadata) {
 }
 
 function handleDialogFlowAction(sender, action, messages, contexts, parameters) {
-    console.log("seguido llego este mensaje: ", JSON.stringify(messages));
     switch (action) {
         case 'horario.action':
             let agencyToFind = messages[0].text.text[0];
@@ -371,44 +398,61 @@ function handleDialogFlowResponse(sender, response) {
 }
 
 async function sendToDialogFlow(sender, textString, params) {
-
+    let textToDialogFlow = textString;
     sendTypingOn(sender);
-
-    try {
-        const sessionPath = sessionClient.sessionPath(
-            config.GOOGLE_PROJECT_ID,
-            sessionIds.get(sender)
-        );
-
-        const request = {
-            session: sessionPath,
-            queryInput: {
-                text: {
-                    text: textString,
-                    languageCode: config.DF_LANGUAGE_CODE,
-                },
-            },
-            queryParams: {
-                payload: {
-                    data: params
+    setSessionAndUser(sender, async(callback) => {
+        if (callback) {
+            let status = await verifyPrivacyPolicy(sender);
+            if (!status) {
+                console.log("el estado es: ", status);
+                if (textToDialogFlow != 'si_get_started_payload' && textToDialogFlow != 'no_get_started_payload') {
+                    textToDialogFlow = 'GET_STARTED';
+                    // console.log("mensaje: ", textString);
+                } else if (textToDialogFlow == 'si_get_started_payload') {
+                    await userService.updatePrivacyPolicyStatus(sender);
+                    privacyPolicy.set(sender, true)
+                    setTimeout(() => {
+                        sendToDialogFlow(sender, 'welcome_intent');
+                    }, 2000);
                 }
             }
-        };
-        const responses = await sessionClient.detectIntent(request);
+            try {
+                const sessionPath = sessionClient.sessionPath(
+                    config.GOOGLE_PROJECT_ID,
+                    sessionIds.get(sender)
+                );
 
-        const result = responses[0].queryResult;
-        let defaultResponses = [];
-        result.fulfillmentMessages.forEach(element => {
-            if (element.platform == 'PLATFORM_UNSPECIFIED') {
-                defaultResponses.push(element);
+                const request = {
+                    session: sessionPath,
+                    queryInput: {
+                        text: {
+                            text: textToDialogFlow,
+                            languageCode: config.DF_LANGUAGE_CODE,
+                        },
+                    },
+                    queryParams: {
+                        payload: {
+                            data: params
+                        }
+                    }
+                };
+                const responses = await sessionClient.detectIntent(request);
+
+                const result = responses[0].queryResult;
+                let defaultResponses = [];
+                result.fulfillmentMessages.forEach(element => {
+                    if (element.platform == 'PLATFORM_UNSPECIFIED') {
+                        defaultResponses.push(element);
+                    }
+                });
+                result.fulfillmentMessages = defaultResponses;
+                handleDialogFlowResponse(sender, result);
+            } catch (e) {
+                console.log('error');
+                console.log(e);
             }
-        });
-        result.fulfillmentMessages = defaultResponses;
-        handleDialogFlowResponse(sender, result);
-    } catch (e) {
-        console.log('error');
-        console.log(e);
-    }
+        }
+    });
 
 }
 
@@ -655,7 +699,7 @@ function sendReadReceipt(recipientId) {
  *
  */
 function sendTypingOn(recipientId) {
-
+    console.log("activando typing");
 
     var messageData = {
         recipient: {
@@ -756,9 +800,6 @@ function receivedPostback(event) {
     var senderID = event.sender.id;
     var recipientID = event.recipient.id;
     var timeOfPostback = event.timestamp;
-
-    setSessionAndUser(senderID);
-
     // The 'payload' param is a developer-defined field which is set in a postback
     // button for Structured Messages.
     var payload = event.postback.payload;

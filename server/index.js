@@ -1,12 +1,13 @@
-const config = require('./config');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+//auth
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
 const app = express();
 
-//Middleware
-require('./chatbot/app');
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({
     extended: false
@@ -14,7 +15,16 @@ app.use(bodyParser.urlencoded({
 
 // parse application/json
 app.use(bodyParser.json())
-app.use(cors());
+    // app.use(cors());
+    // CORS middleware
+const allowCrossDomain = function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', '*');
+    res.header('Access-Control-Allow-Headers', '*');
+    next();
+}
+
+app.use(allowCrossDomain)
 
 const routes = require('./routes/api/api.js');
 const webhook = require('./chatbot/app.js');

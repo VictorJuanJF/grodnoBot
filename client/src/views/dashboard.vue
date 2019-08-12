@@ -1,14 +1,15 @@
 <template>
   <v-app id="keep">
-    <v-app-bar dark app clipped-left color="#1867C0">
-      <span class="title ml-3 mr-5">
-        <span class="font-weight-light">Charlie Bot</span>
-      </span>
-      <v-spacer></v-spacer>
-    </v-app-bar>
+    <toolbar />
+    <drawer />
     <v-content v-if="isDataReady">
-      <router-view></router-view>
+      <v-fade-transition mode="out-in">
+        <router-view></router-view>
+      </v-fade-transition>
     </v-content>
+    <v-overlay :value="overlay">
+      <v-progress-circular :size="70" :width="3" color="purple" indeterminate></v-progress-circular>
+    </v-overlay>
   </v-app>
 </template>
 
@@ -26,11 +27,13 @@ export default {
     ],
     isDataReady: false
   }),
-  beforeMount() {
+  mounted() {
     this.getInitialData();
+    this.$store.dispatch("initialLoad");
   },
   methods: {
     getInitialData() {
+      this.$store.dispatch("showOverlay", true);
       axios
         .get("/api/chatbot/agent/intents")
         .then(res => {
@@ -46,7 +49,15 @@ export default {
         })
         .catch(error => {
           console.log(error);
+        })
+        .finally(() => {
+          this.$store.dispatch("showOverlay", false);
         });
+    }
+  },
+  computed: {
+    overlay() {
+      return this.$store.state.overlay;
     }
   }
 };

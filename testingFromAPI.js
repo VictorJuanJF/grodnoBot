@@ -270,3 +270,21 @@ const response = [{
     },
     "webhookStatus": null
 }, null, null]
+
+const persistanteMenu = {
+    "persistent_menu": [{
+        locale: "default",
+        composer_input_disabled: false,
+        call_to_actions: [{
+                "type": "postback",
+                "title": "Fun news",
+                "payload": "FUN_NEWS"
+            },
+            {
+                "type": "postback",
+                "title": "Start here",
+                "payload": "GET_STARTED"
+            }
+        ]
+    }]
+}

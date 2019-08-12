@@ -11,6 +11,10 @@ const request = require('request');
 const app = express();
 const router = express.Router();
 const uuid = require('uuid');
+const levenshtainService = require('../Algorithms/Levenshtein');
+//database
+const agenciesService = require('../database/agencies');
+const userService = require('../database/users');
 // Facebook me da payloads (botones,carrusel,etc) en protocolo struct, con la libreria
 //de abajo puedo desestructuarlo y mandarlo a graph api
 const {
@@ -64,7 +68,9 @@ app.use(bodyParser.urlencoded({
 // Process application/json
 app.use(bodyParser.json());
 
-
+//maps
+const sessionIds = new Map();
+const usersMap = new Map();
 
 
 
@@ -79,8 +85,6 @@ const sessionClient = new dialogflow.SessionsClient({
     credentials
 });
 
-
-const sessionIds = new Map();
 
 // Index route
 // app.get('/', function(req, res) {
@@ -146,9 +150,18 @@ router.post('/webhook/', function(req, res) {
     }
 });
 
+function setSessionAndUser(senderID) {
+    console.log('Se entro a set SessionAndUser');
+    if (!sessionIds.has(senderID)) {
+        sessionIds.set(senderID, uuid.v1());
+    }
 
-
-
+    if (!usersMap.has(senderID)) {
+        userService.addUser(function(user) {
+            usersMap.set(senderID, user);
+        }, senderID);
+    }
+}
 
 function receivedMessage(event) {
 
@@ -157,9 +170,7 @@ function receivedMessage(event) {
     var timeOfMessage = event.timestamp;
     var message = event.message;
 
-    if (!sessionIds.has(senderID)) {
-        sessionIds.set(senderID, uuid.v1());
-    }
+    setSessionAndUser(senderID);
     //console.log("Received message for user %d and page %d at %d with message:", senderID, recipientID, timeOfMessage);
     //console.log(JSON.stringify(message));
 
@@ -210,11 +221,21 @@ function handleEcho(messageId, appId, metadata) {
 }
 
 function handleDialogFlowAction(sender, action, messages, contexts, parameters) {
+    console.log("seguido llego este mensaje: ", JSON.stringify(messages));
     switch (action) {
+        case 'horario.action':
+            let agencyToFind = messages[0].text.text[0];
+            levenshtainService.compareStrings(agencyToFind, (word) => {
+                agenciesService.getAgency((callback) => {
+                    console.log("respuesta de bd: ", callback);
+                    sendTextMessage(sender, `EL horario de ${word} es: ${callback.schedule}`)
+                }, word);
+            });
+            break;
         default:
-        //unhandled action, just send back the text
+            //unhandled action, just send back the text
             console.log("se mandara el mensaje por defecto de handleDialogFlowAction");
-        handleMessages(messages, sender);
+            handleMessages(messages, sender);
     }
 }
 
@@ -307,7 +328,6 @@ function handleMessages(messages, sender) {
             setTimeout(handleCardMessages.bind(null, cardTypes, sender), timeout);
             cardTypes = [];
             timeout = i * timeoutInterval;
-            console.log("se cumplio la primera condificion de handlemessages");
             setTimeout(handleMessage.bind(null, messages[i], sender), timeout);
         } else if (messages[i].message == "card" && i == messages.length - 1) {
             cardTypes.push(messages[i]);
@@ -319,7 +339,6 @@ function handleMessages(messages, sender) {
         } else {
 
             timeout = i * timeoutInterval;
-            console.log("se cumplio la segunda condificion de handlemessages");
             setTimeout(handleMessage.bind(null, messages[i], sender), timeout);
         }
 
@@ -738,18 +757,17 @@ function receivedPostback(event) {
     var recipientID = event.recipient.id;
     var timeOfPostback = event.timestamp;
 
+    setSessionAndUser(senderID);
+
     // The 'payload' param is a developer-defined field which is set in a postback
     // button for Structured Messages.
     var payload = event.postback.payload;
-
-    switch (payload) {
-        default:
-        //unindentified payload
-            sendTextMessage(senderID, "I'm not sure what you want. Can you be more specific? gaa");
-        break;
-
+    console.log("el payload de postback: ", payload);
+    if (payload != 'GET_STARTED') {
+        sendToDialogFlow(senderID, payload);
+    } else {
+        sendToDialogFlow(senderID, "Empezar");
     }
-
     console.log("Received postback for user %d and page %d with payload '%s' " +
         "at %d", senderID, recipientID, payload, timeOfPostback);
 

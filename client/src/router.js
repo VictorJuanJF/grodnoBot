@@ -13,7 +13,7 @@ let routes = [{
         path: '',
         name: 'dashboard',
         redirect: {
-            name: 'startChatbot'
+            name: 'intent'
         }
     }, {
         path: 'intenciones',
@@ -24,9 +24,13 @@ let routes = [{
         name: 'updateIntent',
         component: require('./views/drawerPages/updateIntent.vue').default
     }, {
-        path: '/menu-persistente',
+        path: 'menu-persistente',
         name: 'persistantMenu',
         component: require('./views/drawerPages/persistantMenu.vue').default
+    }, {
+        path: 'agencias',
+        name: 'agencies',
+        component: require('./views/drawerPages/agencies.vue').default
     }]
 }, {
     path: '/',

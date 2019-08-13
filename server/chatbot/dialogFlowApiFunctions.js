@@ -147,6 +147,9 @@ const updateIntent = async(newIntent, callback) => {
     console.log("se entro a actualizar intent");
     const request = {
         intent: newIntent,
+        // updateMask: {
+        //     paths: ['rootFollowupIntentName'],
+        // },
         // parent: projectAgentPath,
     };
     const [response] = await intentsClient.updateIntent(request);

@@ -249,16 +249,30 @@ function handleEcho(messageId, appId, metadata) {
 }
 
 function handleDialogFlowAction(sender, action, messages, contexts, parameters) {
+    let agencyToFind = '';
     switch (action) {
         case 'horario.action':
-            let agencyToFind = messages[0].text.text[0];
+            agencyToFind = messages[0].text.text[0];
             levenshtainService.compareStrings(agencyToFind, (word) => {
-                agenciesService.getAgency((callback) => {
-                    console.log("respuesta de bd: ", callback);
-                    sendTextMessage(sender, `EL horario de ${word} es: ${callback.schedule}`)
+                agenciesService.getAgency((agency) => {
+                    console.log("respuesta de bd: ", agency.schedule);
+                    sendTextMessage(sender, `EL horario de ${word} es: ${agency.schedule}`)
                 }, word);
             });
             break;
+        case 'agencia.ubicacion.action':
+            agencyToFind = messages[0].text.text[0];
+            levenshtainService.compareStrings(agencyToFind, (word) => {
+                agenciesService.getAgency((agency) => {
+                    console.log("respuesta de bd: ", agency);
+                    sendTextMessage(sender, `La ${word} está ubicada en ${agency.address}, (${agency.name}). Sus horarios de atención son de ${agency.schedule}`);
+                    setTimeout(() => {
+                        sendTextMessage(sender, `Para comunicarte con nuestras agencias, tan solo comunícate con nuestra Banca Telefónica al 052-583658. ¡Gracias por escribirnos!`);
+                    }, 1000);
+                }, word);
+            });
+            break;
+
         default:
             //unhandled action, just send back the text
             console.log("se mandara el mensaje por defecto de handleDialogFlowAction");

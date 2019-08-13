@@ -1,20 +1,16 @@
 //==============================================
 //===========Algoritmo de Levenshtain===========
 //==============================================
+const {
+    dictionary
+} = require('./dictionary');
 
 let weights = [];
 let MaxPercentWord = [];
 //Position 0 : Percent ------- Position 1: Word
 
 
-entries = [{
-    value: 'AGENCIA CAYMA',
-    synonym: ['AGENCIA CAYMA']
-}, {
-    value: 'AGENCIA BUSTAMANTE Y RIVERO',
-    synonym: ['AGENCIA BUSTAMANTE Y RIVERO']
-}]
-
+entries = dictionary;
 const compareStrings = (strg1, callback) => {
     console.log("recibi la palabraÑ ", strg1);
     var k = 0;

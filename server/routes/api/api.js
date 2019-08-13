@@ -9,6 +9,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const config = require('../../chatbot/config.js');
 const axios = require('axios');
+const agenciesService = require('../../database/agencies');
+const regionsService = require('../../database/regions');
 var fs = require('fs');
 //auth
 router.post('/login', (req, res) => {
@@ -165,6 +167,66 @@ router.get('/chatbot/agent/persistantmenu/list', (req, res) => {
             err
         });
     }
+});
+
+router.get('/chatbot/agent/agencies/list', (req, res) => {
+    agenciesService.listAgencies((err, list) => {
+        if (err) {
+            console.log(err);
+            res.status(400).json({
+                ok: false,
+                err
+            });
+        } else {
+            res.json({
+                ok: true,
+                payload: list
+            });
+        }
+    });
+});
+
+
+router.get('/chatbot/agent/regions/list', (req, res) => {
+    regionsService.listRegions((err, list) => {
+        if (err) {
+            console.log(err);
+            res.status(400).json({
+                ok: false,
+                err
+            });
+        } else {
+            res.json({
+                ok: true,
+                payload: list
+            });
+        }
+    });
+});
+router.post('/chatbot/agent/agencies/create', (req, res) => {
+    let newAgency = req.body.newAgency;
+    if (newAgency.agency_name.length == 0) {
+        return res.status(400).json({
+            ok: false,
+            err: {
+                message: 'El nombre de la agencia debe estar completo'
+            }
+        });
+    }
+    agenciesService.createAgency(newAgency, (err, callback) => {
+        if (err) {
+            console.log(err);
+            res.status(400).json({
+                ok: false,
+                err
+            });
+        } else {
+            res.json({
+                ok: true,
+                payload: callback
+            });
+        }
+    });
 });
 
 

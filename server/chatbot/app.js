@@ -175,12 +175,15 @@ function verifyPrivacyPolicy(senderID) {
     console.log("se empezara a verificar las politicas");
     return new Promise((resolve, reject) => {
         if (privacyPolicy.has(senderID)) {
+            console.log("el usuario estaba registrado en map y se envio: ", privacyPolicy.get(senderID));
             resolve(privacyPolicy.get(senderID));
         } else {
+            console.log("el usuario no estaba en map y se procedio a buscar en la bd");
             userService.getPrivacyPolicyStatus(senderID, (err, res) => {
                 if (err) {
                     reject(err);
                 } else {
+                    console.log("en el map se colocara: ", res);
                     privacyPolicy.set(senderID, res);
                     console.log("estado de las politicas: ", privacyPolicy.get(senderID));
 
@@ -417,17 +420,20 @@ async function sendToDialogFlow(sender, textString, params) {
     setSessionAndUser(sender, async(callback) => {
         if (callback) {
             let status = await verifyPrivacyPolicy(sender);
+            console.log("se recibio un estado de politica de: ", status);
             if (!status) {
-                console.log("el estado es: ", status);
+                console.log("no aceptaste la politica, el estado es: ", status);
                 if (textToDialogFlow != 'si_get_started_payload' && textToDialogFlow != 'no_get_started_payload') {
+                    console.log("se preguntara de nuevo por las politicas");
                     textToDialogFlow = 'GET_STARTED';
                     // console.log("mensaje: ", textString);
                 } else if (textToDialogFlow == 'si_get_started_payload') {
+                    console.log("se entro a si_get_started_payload");
                     await userService.updatePrivacyPolicyStatus(sender);
                     privacyPolicy.set(sender, true)
                     setTimeout(() => {
                         sendToDialogFlow(sender, 'welcome_intent');
-                    }, 2000);
+                    }, 1000);
                 }
             }
             try {
@@ -823,8 +829,8 @@ function receivedPostback(event) {
     } else {
         sendToDialogFlow(senderID, "Empezar");
     }
-    console.log("Received postback for user %d and page %d with payload '%s' " +
-        "at %d", senderID, recipientID, payload, timeOfPostback);
+    // console.log("Received postback for user %d and page %d with payload '%s' " +
+    //     "at %d", senderID, recipientID, payload, timeOfPostback);
 
 }
 

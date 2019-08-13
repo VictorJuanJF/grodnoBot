@@ -18,13 +18,17 @@ export default new Vuex.Store({
         loginError: null,
         loginSuccessful: false,
         snackbar: {
-            text: 'snackbar!',
-            active: false
+            text: '',
+            active: false,
+            color: 'success'
         },
         toolbar: {
             drawerIcon: null,
         },
-        overlay: false
+        overlay: {
+            active: false,
+            text: ''
+        }
     },
     mutations: {
         auth_request(state) {
@@ -50,29 +54,49 @@ export default new Vuex.Store({
         auth_error(state) {
             state.status = 'error'
         },
-        showSnackbar(state, text) {
+        showSnackbar(state, {
+            text,
+            color
+        }) {
             state.snackbar.text = text;
+            state.snackbar.color = color;
             state.snackbar.active = true;
         },
         initialLoad(state) {
             state.loggingIn = true;
             state.loggingIn = true;
         },
-        showOverlay(state, status) {
-            state.overlay = status;
+        showOverlay(state, {
+            active,
+            text
+        }) {
+            state.overlay.active = active;
+            state.overlay.text = text;
         }
 
     },
     actions: {
         showSnackbar({
             commit
-        }, text) {
-            commit('showSnackbar', text);
+        }, {
+            text,
+            color
+        }) {
+            commit('showSnackbar', {
+                text,
+                color
+            });
         },
         showOverlay({
             commit
-        }, status) {
-            commit('showOverlay', status);
+        }, {
+            active,
+            text
+        }) {
+            commit('showOverlay', {
+                active,
+                text
+            });
         },
         register({
             commit

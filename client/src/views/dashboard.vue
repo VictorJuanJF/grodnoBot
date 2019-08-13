@@ -8,7 +8,8 @@
       </v-fade-transition>
     </v-content>
     <v-overlay :value="overlay">
-      <v-progress-circular :size="70" :width="3" color="purple" indeterminate></v-progress-circular>
+      <v-progress-circular :size="70" :width="3" color="primary" indeterminate></v-progress-circular>
+      <p class="ml-n3">{{overlayText}}</p>
     </v-overlay>
   </v-app>
 </template>
@@ -33,7 +34,10 @@ export default {
   },
   methods: {
     getInitialData() {
-      this.$store.dispatch("showOverlay", true);
+      this.$store.dispatch("showOverlay", {
+        active: true,
+        text: "Cargando datos"
+      });
       axios
         .get("/api/chatbot/agent/intents")
         .then(res => {
@@ -48,16 +52,31 @@ export default {
           }
         })
         .catch(error => {
-          console.log(error);
+          if (error.code === "ECONNABORTED") {
+            console.log("se excedio el tiempo limite");
+            this.$store.dispatch("showSnackbar", {
+              text: "Algo salió mal",
+              color: "error"
+            });
+          } else {
+            console.log(error);
+            throw error;
+          }
         })
         .finally(() => {
-          this.$store.dispatch("showOverlay", false);
+          this.$store.dispatch("showOverlay", {
+            active: false,
+            text: "Cargando datos"
+          });
         });
     }
   },
   computed: {
     overlay() {
-      return this.$store.state.overlay;
+      return this.$store.state.overlay.active;
+    },
+    overlayText() {
+      return this.$store.state.overlay.text;
     }
   }
 };

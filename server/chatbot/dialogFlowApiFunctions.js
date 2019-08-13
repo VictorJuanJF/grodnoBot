@@ -148,8 +148,8 @@ const updateIntent = async(newIntent, callback) => {
     const request = {
         intent: newIntent,
         updateMask: {
-            paths: ['rootFollowupIntentName'],
-        },
+            paths: ['messages', 'display_name', 'training_phrases'],
+        }
         // parent: projectAgentPath,
     };
     const [response] = await intentsClient.updateIntent(request);

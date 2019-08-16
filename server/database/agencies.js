@@ -88,13 +88,35 @@ const updateAgency = (agency, callback) => {
 
     });
 }
+const listAgenciesByRegion = (region, callback) => {
+    var pool = new pg.Pool(config.PG_CONFIG);
+    pool.connect(function(err, client, done) {
+        if (err) {
+            return console.error('Error acquiring client', err.stack);
+        }
+        client
+            .query(
+                `select agency_name,address from agencies inner join regions on agencies.region=regions.id where name='${region}'`,
+                function(err, result) {
+                    if (err) {
+                        console.log(err);
+                        callback(err);
+                    } else {
+                        callback(null, result.rows);
+                    };
+                    done();
+                });
+
+    });
+}
 
 module.exports = {
     getAgency,
     listAgencies,
-    createAgency
+    createAgency,
+    listAgenciesByRegion
 }
 
-// getAgency((response) => {
+// listAgencies((err, response) => {
 //     console.log("la respuesta es: ", response);
-// }, 'AGENCIA CAYMA')
+// })

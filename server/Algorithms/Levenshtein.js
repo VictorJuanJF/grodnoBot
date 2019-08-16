@@ -1,18 +1,22 @@
 //==============================================
 //===========Algoritmo de Levenshtain===========
 //==============================================
-const {
-    dictionary
-} = require('./dictionary');
-
 let weights = [];
 let MaxPercentWord = [];
 //Position 0 : Percent ------- Position 1: Word
 
-
-entries = dictionary;
-const compareStrings = (strg1, callback) => {
-    console.log("recibi la palabraÑ ", strg1);
+let regionsDictionary = require('./regionsDictionary');
+// entries = dictionary;
+/**
+ * 
+ * @param {*} strg1 string to compare with dictonary
+ * @param {*} strings strings to create dictionary
+ * @param {*} callback response from function
+ */
+const compareStrings = (strg1, strgs, callback) => {
+    //generating dictionary
+    let entries = strgs;
+    console.log("recibi la palabra ", strg1);
     var k = 0;
     for (let i = 0; i < entries.length; i++) {
         for (let j = 0; j < entries[i].synonym.length; j++) {
@@ -27,7 +31,8 @@ const compareStrings = (strg1, callback) => {
             k = k + 1;
         }
     }
-    console.log(`Palabra encontrada: ${MaxPercentWord}`);
+    //finding the agency
+    console.log(`Palabra encontrada: ${MaxPercentWord[1]}`);
     callback(MaxPercentWord[1]);
 }
 

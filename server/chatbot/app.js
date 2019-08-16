@@ -252,34 +252,119 @@ function handleEcho(messageId, appId, metadata) {
 }
 
 function handleDialogFlowAction(sender, action, messages, contexts, parameters) {
-    let agencyToFind = '';
+    let dynamicResponseIndex = null;
+    let dynamicResponse = "";
+    let agencyName = null;
+    //looking for $any parameter // because of it represents agencie name (cmac)
+    if (parameters.fields.hasOwnProperty('any')) {
+        agencyName = parameters.fields.any.stringValue;
+        dynamicResponseIndex = messages.findIndex(message => message.text.text[0].includes(agencyName));
+    }
     switch (action) {
+        case 'Agencia.listado.region.action':
+            {
+                console.log("llego este parametro: ", parameters);
+                let region = parameters.fields.regions.stringValue;
+                console.log("se enviara la region: ", region);
+                let regionsDictionary = require('../Algorithms/regionsDictionary').entries;
+                levenshtainService.compareStrings(region, regionsDictionary, (regionFinded) => {
+                    agenciesService.listAgenciesByRegion(regionFinded, (err, agencies) => {
+                        console.log("llegaron estas agencias: ", agencies);
+                        let agenciesByRegion = "";
+                        agencies.forEach((agency, agencyIndex) => {
+                            agenciesByRegion += "AGENCIA " + agency.agency_name;
+                            if (agencyIndex < agencies.length - 1) {
+                                agenciesByRegion += (agencyIndex) == agencies.length - 2 ? " y " : " ,";
+                            }
+                        });
+                        console.log("las agencias: ", agenciesByRegion);
+                        let dynamicRespose = "";
+                        for (let index = 0; index < messages.length; index++) {
+                            const message = messages[index];
+                            dynamicResponse = message.text.text[0].replace('$agencias', agenciesByRegion);
+                            messages[index].text.text[0] = dynamicResponse;
+                        }
+                        handleMessages(messages, sender);
+                    });
+                });
+                break;
+            }
         case 'horario.action':
-            agencyToFind = messages[0].text.text[0];
-            levenshtainService.compareStrings(agencyToFind, (word) => {
-                agenciesService.getAgency((agency) => {
-                    console.log("respuesta de bd: ", agency.schedule);
-                    sendTextMessage(sender, `EL horario de ${word} es: ${agency.schedule}`)
-                }, word);
-            });
+            if (agencyName) {
+                agenciesService.listAgencies((err, agencies) => {
+                    console.log("las agencias de bd: ", agencies);
+                    if (err) {
+                        console.log("algo salio mal en la llamada a la base de datos: ", err);
+                    } else {
+                        var agenciesDictionary = [];
+                        agencies.forEach(strg => {
+                            agenciesDictionary.push({
+                                value: strg.agency_name,
+                                synonym: [strg.agency_name]
+                            });
+                        });
+                        levenshtainService.compareStrings(agencyName, agenciesDictionary, (agency) => {
+                            var agency = agencies.find(agencie => agencie.agency_name == agency);
+                            let dynamicRespose = "";
+                            for (let index = 0; index < messages.length; index++) {
+                                const message = messages[index];
+                                dynamicResponse = message.text.text[0].replace(agencyName, agency.agency_name).replace('$direccion', agency.address).replace('$horario', agency.schedule);
+                                messages[index].text.text[0] = dynamicResponse;
+                            }
+                            handleMessages(messages, sender);
+                        });
+                    }
+                });
+            } else {
+                console.log("Por favor, define el parametro $any (nombre de la agencia)");
+                sendTextMessage(sender, "Aún no me enseñaron sobre los horarios de las agencias");
+            }
             break;
         case 'agencia.ubicacion.action':
-            agencyToFind = messages[0].text.text[0];
-            levenshtainService.compareStrings(agencyToFind, (word) => {
-                agenciesService.getAgency((agency) => {
-                    console.log("respuesta de bd: ", agency);
-                    sendTextMessage(sender, `La ${word} está ubicada en ${agency.address}, (${agency.name}). Sus horarios de atención son de ${agency.schedule}`);
-                    setTimeout(() => {
-                        sendTextMessage(sender, `Para comunicarte con nuestras agencias, tan solo comunícate con nuestra Banca Telefónica al 052-583658. ¡Gracias por escribirnos!`);
-                    }, 1000);
-                }, word);
-            });
+            if (agencyName) {
+                agenciesService.listAgencies((err, agencies) => {
+                    if (err) {
+                        console.log("algo salio mal en la llamada a la base de datos: ", err);
+                    } else {
+                        var agenciesDictionary = [];
+                        agencies.forEach(strg => {
+                            agenciesDictionary.push({
+                                value: strg.agency_name,
+                                synonym: [strg.agency_name]
+                            });
+                        });
+                        levenshtainService.compareStrings(agencyName, agenciesDictionary, (agency) => {
+                            var agency = agencies.find(agencie => agencie.agency_name == agency);
+                            let dynamicRespose = "";
+                            for (let index = 0; index < messages.length; index++) {
+                                const message = messages[index];
+                                dynamicResponse = message.text.text[0].replace(agencyName, agency.agency_name).replace('$direccion', agency.address).replace('$horario', agency.schedule);
+                                messages[index].text.text[0] = dynamicResponse;
+                            }
+                            handleMessages(messages, sender);
+                        });
+                    }
+                });
+            } else {
+                console.log("Por favor, define el parametro $any (nombre de la agencia)");
+                sendTextMessage(sender, "Aún no me enseñaron sobre las ubicaciones de las agencias");
+            }
             break;
 
         default:
             //unhandled action, just send back the text
             console.log("se mandara el mensaje por defecto de handleDialogFlowAction");
             handleMessages(messages, sender);
+    }
+}
+
+function convertToTextMessage(text) {
+    return {
+        platform: "PLATFORM_UNSPECIFIED",
+        text: {
+            text: [text]
+        },
+        message: "text"
     }
 }
 

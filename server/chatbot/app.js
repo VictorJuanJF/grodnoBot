@@ -268,8 +268,9 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
                 console.log("se enviara la region: ", region);
                 let regionsDictionary = require('../Algorithms/regionsDictionary').entries;
                 levenshtainService.compareStrings(region, regionsDictionary, (regionFinded) => {
-                    agenciesService.listAgenciesByRegion(regionFinded, (err, agencies) => {
-                        console.log("llegaron estas agencias: ", agencies);
+                    if (regionFinded) {
+                        agenciesService.listAgenciesByRegion(regionFinded, (err, agencies) => {
+                            console.log("llegaron estas agencias: ", agencies);
                         let agenciesByRegion = "";
                         agencies.forEach((agency, agencyIndex) => {
                             agenciesByRegion += "AGENCIA " + agency.agency_name;
@@ -281,18 +282,21 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
                         let dynamicRespose = "";
                         for (let index = 0; index < messages.length; index++) {
                             const message = messages[index];
-                            dynamicResponse = message.text.text[0].replace('$agencias', agenciesByRegion);
+                            dynamicResponse = message.text.text[0].replace(region,regionFinded).replace('$agencias', agenciesByRegion);
                             messages[index].text.text[0] = dynamicResponse;
                         }
                         handleMessages(messages, sender);
                     });
+                        }else {
+                            sendToDialogFlow(sender,"Agencia.listado.region.fallback")
+                        }
+                        
                 });
                 break;
             }
         case 'horario.action':
             if (agencyName) {
                 agenciesService.listAgencies((err, agencies) => {
-                    console.log("las agencias de bd: ", agencies);
                     if (err) {
                         console.log("algo salio mal en la llamada a la base de datos: ", err);
                     } else {
@@ -304,14 +308,19 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
                             });
                         });
                         levenshtainService.compareStrings(agencyName, agenciesDictionary, (agency) => {
-                            var agency = agencies.find(agencie => agencie.agency_name == agency);
-                            let dynamicRespose = "";
+                            if (agency) {
+                               var agency = agencies.find(agencie => agencie.agency_name == agency);
                             for (let index = 0; index < messages.length; index++) {
                                 const message = messages[index];
                                 dynamicResponse = message.text.text[0].replace(agencyName, agency.agency_name).replace('$direccion', agency.address).replace('$horario', agency.schedule);
                                 messages[index].text.text[0] = dynamicResponse;
                             }
-                            handleMessages(messages, sender);
+                            handleMessages(messages, sender); 
+                            } else {
+                                console.log("como el valor es menor a 0.6 se entro al mensaje de rechazo");
+                                sendToDialogFlow(sender,"Agencia.horario.fallback");
+                            }
+                            
                         });
                     }
                 });
@@ -334,14 +343,18 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
                             });
                         });
                         levenshtainService.compareStrings(agencyName, agenciesDictionary, (agency) => {
-                            var agency = agencies.find(agencie => agencie.agency_name == agency);
-                            let dynamicRespose = "";
+                            if (agency) {
+                               var agency = agencies.find(agencie => agencie.agency_name == agency);
                             for (let index = 0; index < messages.length; index++) {
                                 const message = messages[index];
                                 dynamicResponse = message.text.text[0].replace(agencyName, agency.agency_name).replace('$direccion', agency.address).replace('$horario', agency.schedule);
                                 messages[index].text.text[0] = dynamicResponse;
                             }
-                            handleMessages(messages, sender);
+                            handleMessages(messages, sender); 
+                            } else {
+                                sendToDialogFlow(sender,"Agencia.ubicacion.fallback");
+                            }
+                            
                         });
                     }
                 });
@@ -484,9 +497,6 @@ function handleDialogFlowResponse(sender, response) {
     let action = response.action;
     let contexts = response.outputContexts;
     let parameters = response.parameters;
-
-    sendTypingOff(sender);
-
     if (isDefined(action)) {
         handleDialogFlowAction(sender, action, messages, contexts, parameters);
     } else if (isDefined(messages)) {
@@ -856,7 +866,7 @@ function sendAccountLinking(recipientId) {
             }
         }
     };
-
+    sendTypingOff(recipientId);
     callSendAPI(messageData);
 }
 

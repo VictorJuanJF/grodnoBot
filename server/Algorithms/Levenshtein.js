@@ -32,8 +32,12 @@ const compareStrings = (strg1, strgs, callback) => {
         }
     }
     //finding the agency
-    console.log(`Palabra encontrada: ${MaxPercentWord[1]}`);
-    callback(MaxPercentWord[1]);
+    console.log(`Palabra encontrada: ${MaxPercentWord}`);
+    if (MaxPercentWord[0]>0.6) {
+        callback(MaxPercentWord[1]);
+    } else {
+        callback(false);
+    }
 }
 
 function editDistance(s1, s2) {

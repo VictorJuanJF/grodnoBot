@@ -288,3 +288,82 @@ const persistanteMenu = {
         ]
     }]
 }
+const carouselFormat = {
+    "facebook": {
+        "attachment": {
+            "payload": {
+                "elements": [{
+                    "buttons": [{
+                        "title": "Crédito negocio",
+                        "payload": "crédito negocio",
+                        "type": "postback"
+                    }, {
+                        "title": "Crédito vivienda",
+                        "payload": "Crédito vivienda",
+                        "type": "postback"
+                    }, {
+                        "title": "Crédito consumo",
+                        "payload": "Crédito consumo",
+                        "type": "postback"
+                    }],
+                    "subtitle": "Contamos con las siguientes opciones",
+                    "image_url": "https://cdn.solcredito.com/creditos-rapidos.png",
+                    "title": "Créditos"
+                }, {
+                    "title": "Ahorros",
+                    "buttons": [{
+                        "url": "https://www.cmactacna.com.pe/Ahorros/Corriente",
+                        "title": "Ahorro corriente",
+                        "type": "web_url"
+                    }, {
+                        "type": "web_url",
+                        "url": "https://www.cmactacna.com.pe/Ahorros/Sueldo",
+                        "title": "Ahorro sueldo"
+                    }, {
+                        "payload": "ver_mas_ahorros_tipos",
+                        "type": "postback",
+                        "title": "Ver más"
+                    }],
+                    "subtitle": "Listado de créditos de ahorros",
+                    "image_url": "https://cdn.pixabay.com/photo/2018/01/25/20/21/currency-3106963_960_720.jpg"
+                }, {
+                    "subtitle": "Listado de servicios",
+                    "image_url": "https://conceptodefinicion.de/wp-content/uploads/2016/06/Marketing_de_Servicios.jpg",
+                    "title": "Servicios",
+                    "buttons": [{
+                        "type": "web_url",
+                        "url": "https://www.cmactacna.com.pe/Servicios/CCE",
+                        "title": "Transferencias Interbancarias"
+                    }, {
+                        "title": "Emisión y Pagos",
+                        "type": "web_url",
+                        "url": "https://www.cmactacna.com.pe/Servicios/Giros"
+                    }, {
+                        "payload": "ver_mas_servicios_tipos",
+                        "type": "postback",
+                        "title": "Ver más"
+                    }]
+                }, {
+                    "buttons": [{
+                        "type": "web_url",
+                        "url": "https://www.cmactacna.com.pe/Canales/TuCajaPorInternet",
+                        "title": "Caja Por Internet"
+                    }, {
+                        "url": "https://www.cmactacna.com.pe/Canales/BIM",
+                        "title": "Billetera Electrónica",
+                        "type": "web_url"
+                    }, {
+                        "title": "Ver más",
+                        "payload": "ver_mas_canales_tipos",
+                        "type": "postback"
+                    }],
+                    "subtitle": "Listado de canales",
+                    "image_url": "https://ipmark.com/wp-content/uploads/2014/10/canales_atencion_cliente.jpg",
+                    "title": "Canales Electrónicos"
+                }],
+                "template_type": "generic"
+            },
+            "type": "template"
+        }
+    }
+}

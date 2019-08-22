@@ -59,7 +59,7 @@ router.post('/login', (req, res) => {
     });
 });
 
-router.post('/register', async(req, res) => {
+router.post('/register', async (req, res) => {
     let body = req.body;
     let user = {
         first_name: body.first_name,
@@ -107,7 +107,8 @@ router.put('/chatbot/agent/intents/update', (req, res) => {
         let payload = updateIntent(newIntent, (callback) => {
             res.json({
                 ok: true,
-                payload: callback
+                payload: callback,
+                message: "Intención actualizada con éxito"
             });
         });
     } catch (e) {
@@ -134,10 +135,11 @@ router.post('/chatbot/agent/persistantmenu', (req, res) => {
         .then(response => {
             res.status(200).json({
                 ok: true,
-                payload: 'Persistant menu updated'
+                payload: 'Persistant menu updated',
+                message: 'Menú persistente actualizado con éxito'
             });
             console.log('respuesta de facebook: ', response);
-            fs.writeFile(__dirname + '/../../chatbot/menu/persistantMenu.json', JSON.stringify(buttons), function(err) {
+            fs.writeFile(__dirname + '/../../chatbot/menu/persistantMenu.json', JSON.stringify(buttons), function (err) {
                 if (err) throw err;
                 console.log('complete saved file');
             });

@@ -115,12 +115,11 @@ export default new Vuex.Store({
                             resolve(res.data.message)
                         } else {
                             // error msg
-                            console.error(res.data);
+                            reject(res.data);
                         }
                     })
                     .catch(error => {
                         reject(error);
-                        console.log(error);
                     });
             })
         },

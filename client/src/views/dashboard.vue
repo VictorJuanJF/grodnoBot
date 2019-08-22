@@ -42,8 +42,6 @@ export default {
         .get("/api/chatbot/agent/intents")
         .then(res => {
           if (res.data.ok) {
-            console.log(res.data);
-            console.log("datos conseguidos:");
             this.$store.dispatch("setIntents", res.data.payload);
             this.isDataReady = true;
           } else {

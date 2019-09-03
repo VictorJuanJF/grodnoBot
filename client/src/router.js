@@ -86,7 +86,7 @@ router.beforeEach((to, from, next) => {
         } else {
             let user = JSON.parse(localStorage.getItem('user'))
             if (to.matched.some(record => record.meta.requiresAuth)) {
-                if (user.role == 1 || user.role == 2 || user.role == 'ADMIN') {
+                if (user.role == 1 || user.role == 2) {
                     next()
                 } else {
                     next({

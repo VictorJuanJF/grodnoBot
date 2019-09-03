@@ -16,6 +16,7 @@
 
 <script>
 import axios from "axios";
+import localStorage from "localStorage";
 export default {
   props: {
     source: String
@@ -34,6 +35,9 @@ export default {
   },
   methods: {
     getInitialData() {
+      if (JSON.parse(localStorage.getItem("user")).role == "ADMIN") {
+        localStorage.clear();
+      }
       this.$store.dispatch("showOverlay", {
         active: true,
         text: "Cargando datos"

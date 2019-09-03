@@ -16,7 +16,6 @@
 
 <script>
 import axios from "axios";
-import localStorage from "localStorage";
 export default {
   props: {
     source: String
@@ -27,7 +26,8 @@ export default {
       { icon: "lightbulb_outline", text: "Intenciones", to: "intent" }
       // { icon: "touch_app", text: "Notas bruses 2", to: "brusesNotes2" },
     ],
-    isDataReady: false
+    isDataReady: false,
+    local: null
   }),
   mounted() {
     this.getInitialData();
@@ -35,9 +35,6 @@ export default {
   },
   methods: {
     getInitialData() {
-      if (JSON.parse(localStorage.getItem("user")).role == "ADMIN") {
-        localStorage.clear();
-      }
       this.$store.dispatch("showOverlay", {
         active: true,
         text: "Cargando datos"

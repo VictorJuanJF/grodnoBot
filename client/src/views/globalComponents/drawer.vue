@@ -1,13 +1,13 @@
 <template>
-  <v-navigation-drawer v-model="drawer" app clipped color="grey lighten-4">
-    <v-list dense class="grey lighten-4">
+  <v-navigation-drawer v-model="drawer" app clipped>
+    <v-list dense>
       <template v-for="(item, i) in items">
         <v-list-item :key="i" @click :to="item.to">
           <v-list-item-action>
             <v-icon>{{ item.icon }}</v-icon>
           </v-list-item-action>
           <v-list-item-content>
-            <v-list-item-title class="grey--text">{{ item.text }}</v-list-item-title>
+            <v-list-item-title>{{ item.text }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </template>
@@ -20,11 +20,11 @@ export default {
   data() {
     return {
       items: [
-        // {
-        //   icon: "lightbulb_outline",
-        //   text: "Agencias",
-        //   to: { name: "agencies" }
-        // },
+        {
+          icon: "lightbulb_outline",
+          text: "Agencias",
+          to: { name: "agencies" }
+        },
         {
           icon: "lightbulb_outline",
           text: "Menú Persistente",
@@ -34,6 +34,16 @@ export default {
           icon: "lightbulb_outline",
           text: "Intenciones",
           to: { name: "intent" }
+        },
+        {
+          icon: "mdi-account-edit",
+          text: "Usuarios del sistema",
+          to: { name: "auth_users" }
+        },
+        {
+          icon: "mdi-account-edit",
+          text: "Usuarios de CharlyBot",
+          to: { name: "chatbotUsers" }
         }
       ]
     };

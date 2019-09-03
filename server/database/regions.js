@@ -5,14 +5,14 @@ pg.defaults.ssl = true;
 
 const listRegions = (callback) => {
     var pool = new pg.Pool(config.PG_CONFIG);
-    pool.connect(function(err, client, done) {
+    pool.connect(function (err, client, done) {
         if (err) {
             return console.error('Error acquiring client', err.stack);
         }
         client
             .query(
-                `select * from regions`,
-                function(err, result) {
+                `select id,nombre as name from regiones ORDER BY "nombre" ASC; `,
+                function (err, result) {
                     if (err) {
                         console.log(err);
                         callback(err);

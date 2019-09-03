@@ -5,6 +5,7 @@ const {
     updateIntent
 } = require('../../chatbot/dialogFlowApiFunctions');
 const authUserService = require('../../database/auth_users');
+const chatbotUserService = require('../../database/users');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const config = require('../../chatbot/config.js');
@@ -27,7 +28,6 @@ router.post('/login', (req, res) => {
             });
         }
         if (!result) {
-            console.log("no trajo nada");
             return res.status(400).json({
                 ok: false,
                 err: {
@@ -59,15 +59,64 @@ router.post('/login', (req, res) => {
     });
 });
 
-router.post('/register', async (req, res) => {
+router.post('/users/confirm-password', (req, res) => {
+    let body = req.body;
+    let user = {
+        email: body.email,
+        password: body.password,
+    }
+    authUserService.login(user, (err, result) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                err
+            });
+        }
+        let passwordIsValid = bcrypt.compareSync(user.password, result.password);
+        if (!passwordIsValid) {
+            return res.status(400).json({
+                ok: false,
+                err: {
+                    message: 'Contraseña incorrecta'
+                }
+            });
+        }
+        res.status(200).json({
+            ok: true
+        })
+    });
+});
+
+router.post('/user/update-password', (req, res) => {
+    let body = req.body;
+    let email = body.email;
+    let newPassword = body.newPassword;
+    authUserService.updatePassword(email, newPassword, (err, result) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                ok: false,
+                err: {
+                    message: 'Algo salió mal'
+                }
+            });
+        }
+        res.status(200).json({
+            ok: true,
+            message: 'Contraseña actualizada correctamente'
+        })
+    });
+});
+
+router.post('/register', (req, res) => {
     let body = req.body;
     let user = {
         first_name: body.first_name,
         last_name: body.last_name,
         email: body.email,
         password: body.password,
-        role: 'ADMIN',
-        status: 1,
+        role: body.role,
+        status: body.status,
     }
     authUserService.registerUser(user, (err, result) => {
         if (err) {
@@ -80,13 +129,88 @@ router.post('/register', async (req, res) => {
         res.json({
             ok: true,
             payload: result,
-            message: 'Registro completado con exito!'
+            message: 'Usuario creado con exito!'
         });
 
     });
 });
-//chatbot
 
+router.get('/auth-users/list', (req, res) => {
+    authUserService.list((err, authUsers) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                err
+            });
+        }
+        res.status(200).json({
+            ok: true,
+            payload: authUsers,
+            message: ''
+        })
+    });
+
+});
+router.post('/auth-users/delete', (req, res) => {
+    let email = req.body.email;
+    authUserService.deleteUser(email, (err, callback) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                err
+            });
+        }
+        if (callback) {
+            res.status(200).json({
+                ok: true,
+                message: 'Usuario desactivado con éxito'
+            })
+        }
+    });
+
+});
+router.put('/auth-users/update', (req, res) => {
+    let body = req.body;
+    let user = {
+        first_name: body.first_name,
+        last_name: body.last_name,
+        email: body.email,
+        role: body.role,
+        status: body.status,
+    }
+    authUserService.updateUser(user, (err, updatedUser) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                err
+            });
+        }
+        if (updatedUser) {
+            res.status(200).json({
+                ok: true,
+                payload: updatedUser,
+                message: "Datos de usuario actualizados con éxito"
+            })
+        }
+    });
+
+});
+//chatbot
+router.get('/chatbot/users/list', (req, res) => {
+    chatbotUserService.usersList((err, chatbotUsers) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                err
+            });
+        }
+        res.status(200).json({
+            ok: true,
+            payload: chatbotUsers,
+            message: ''
+        })
+    });
+});
 router.get('/chatbot/agent/intents', (req, res) => {
     try {
         let payload = listIntents((callback) => {
@@ -188,8 +312,28 @@ router.get('/chatbot/agent/agencies/list', (req, res) => {
     });
 });
 
+router.post('/chatbot/agent/agencies/delete', (req, res) => {
+    let id = req.body.id;
+    console.log("recibi el id: ", id);
+    agenciesService.deleteAgency(id, (err, callback) => {
+        if (err) {
+            console.log(err);
+            return res.status(400).json({
+                ok: false,
+                err
+            });
+        }
+        if (callback) {
+            res.json({
+                ok: true,
+                payload: [],
+                message: "Agencia eliminada con éxito"
+            });
+        }
+    });
+});
 
-router.get('/chatbot/agent/regions/list', (req, res) => {
+router.get('/regions/list', (req, res) => {
     regionsService.listRegions((err, list) => {
         if (err) {
             console.log(err);
@@ -205,7 +349,7 @@ router.get('/chatbot/agent/regions/list', (req, res) => {
         }
     });
 });
-router.post('/chatbot/agent/agencies/create', (req, res) => {
+router.post('/agencies/create', (req, res) => {
     let newAgency = req.body.newAgency;
     if (newAgency.agency_name.length == 0) {
         return res.status(400).json({
@@ -225,10 +369,39 @@ router.post('/chatbot/agent/agencies/create', (req, res) => {
         } else {
             res.json({
                 ok: true,
-                payload: callback
+                payload: callback,
+                message: "Agencia creada con éxito"
             });
         }
     });
+});
+router.put('/agencies/update', (req, res) => {
+    let body = req.body;
+    let id = req.body.id;
+    let agency = {
+        address: body.address,
+        agency_name: body.agency_name,
+        reference: body.reference,
+        region: body.region,
+        schedule: body.schedule,
+        synonyms: body.synonyms,
+    }
+    agenciesService.updateAgency(id, agency, (err, updatedAgency) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                err
+            });
+        }
+        if (updatedAgency) {
+            res.status(200).json({
+                ok: true,
+                payload: updatedAgency,
+                message: "Datos de agencia actualizados con éxito"
+            })
+        }
+    });
+
 });
 
 

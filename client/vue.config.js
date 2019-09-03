@@ -5,8 +5,8 @@ module.exports = {
     devServer: {
         proxy: {
             '/api': {
-                target: 'http://localhost:3000'
-                    // target: 'https://mastermindgeeks.herokuapp.com'
+                target: 'http://localhost:8000'
+                // target: 'https://mastermindgeeks.herokuapp.com'
             }
         }
     }

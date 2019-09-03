@@ -1,23 +1,23 @@
 <template>
   <v-container>
-    <h1 class="display-3">Listado de intenciones de Charly Bot</h1>
-    <v-row align="center">
-      <v-col>
+    <h1>Listado de intenciones de Charly Bot</h1>
+    <v-row justify="center">
+      <v-col cols="11">
         <v-text-field label="Buscar intención" v-model="intentToFind"></v-text-field>
       </v-col>
     </v-row>
-    <div class="pa-10">
+    <div class="px-10">
       <v-simple-table>
         <thead>
           <tr>
-            <th class="text-center">Nro</th>
-            <th class="text-center">Intención</th>
+            <th class="text-left">Nro</th>
+            <th class="text-left">Intención</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(intent,i) in filteredIntents" :key="i">
-            <td class="text-center title">{{i+1}}</td>
-            <td class="text-center title">
+            <td class="text-left body-1">{{i+1}}</td>
+            <td class="text-left body-1">
               <router-link
                 :to="{name:'updateIntent',params:{id:extractIntentId(intent.name)}}"
               >{{ intent.displayName }}</router-link>

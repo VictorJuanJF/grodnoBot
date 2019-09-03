@@ -31,6 +31,14 @@ let routes = [{
             path: 'agencias',
             name: 'agencies',
             component: require('./views/drawerPages/agencies.vue').default
+        }, {
+            path: 'usuarios-del-sistema',
+            name: 'auth_users',
+            component: require('./views/drawerPages/authUsers.vue').default
+        }, {
+            path: 'usuarios-de-charly-bot',
+            name: 'chatbotUsers',
+            component: require('./views/drawerPages/chatbotUsers.vue').default
         }]
     }, {
         path: '/',
@@ -78,7 +86,7 @@ router.beforeEach((to, from, next) => {
         } else {
             let user = JSON.parse(localStorage.getItem('user'))
             if (to.matched.some(record => record.meta.requiresAuth)) {
-                if (user.role == 'ADMIN') {
+                if (user.role == 1 || user.role == 2) {
                     next()
                 } else {
                     next({

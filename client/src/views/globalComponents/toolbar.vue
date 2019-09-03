@@ -4,7 +4,6 @@
     <span class="title ml-3 mr-5">Charly Bot</span>
     <v-spacer></v-spacer>
     <v-btn v-if="!$store.state.token" dark outlined :to="{name:'login'}">Iniciar Sesión</v-btn>
-    <v-btn v-if="!$store.state.token" dark outlined :to="{name:'register'}">Registro</v-btn>
     <v-menu v-if="$store.state.token" offset-y>
       <template v-slot:activator="{ on }">
         <v-btn text color="white" dark v-on="on">

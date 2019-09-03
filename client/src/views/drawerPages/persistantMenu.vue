@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row align="center">
-      <h1 class="display-3">Menú persistente</h1>
+      <h1>Menú persistente</h1>
       <v-btn class="ml-5" color="primary" @click="addOption">Añadir Opción</v-btn>
     </v-row>
     <v-card class="mb-5 pa-5" outlined v-for="(option,optionIndex) in options" :key="optionIndex">
@@ -18,8 +18,8 @@
             row
             v-model="option.type"
           >
-            <v-radio label="POSTBACK" value="postback"></v-radio>
-            <v-radio label="ENLACE WEB" value="web_url"></v-radio>
+            <v-radio color="primary" label="POSTBACK" value="postback"></v-radio>
+            <v-radio color="primary" label="ENLACE WEB" value="web_url"></v-radio>
           </v-radio-group>
         </v-col>
       </v-row>

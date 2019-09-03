@@ -6,31 +6,31 @@ const pg = require('pg');
 pg.defaults.ssl = true;
 
 
-const addUser = function(callback, userId) {
+const addUser = function (callback, userId) {
     request({
         uri: 'https://graph.facebook.com/v2.7/' + userId,
         qs: {
             access_token: config.FB_PAGE_TOKEN
         }
 
-    }, function(error, response, body) {
+    }, function (error, response, body) {
         if (!error && response.statusCode == 200) {
 
             var user = JSON.parse(body);
             if (user.first_name.length > 0) {
 
                 var pool = new pg.Pool(config.PG_CONFIG);
-                pool.connect(function(err, client, done) {
+                pool.connect(function (err, client, done) {
                     if (err) {
                         return console.error('Error acquiring client', err.stack);
                     }
                     var rows = [];
                     var date = moment().format();
-                    let sql1 = `SELECT id FROM users WHERE fb_id='${userId}' LIMIT 1`;
+                    let sql1 = `SELECT id FROM chatbot_usuarios WHERE fb_id='${userId}' LIMIT 1`;
                     client
                         .query(sql1,
 
-                            function(err, result) {
+                            function (err, result) {
                                 // done();
                                 if (err) {
                                     callback(err);
@@ -39,8 +39,8 @@ const addUser = function(callback, userId) {
                                 } else {
                                     if (result.rows.length === 0) {
                                         console.log('Agregando usuario a bd');
-                                        let sql = 'INSERT INTO users (fb_id, first_name, last_name, profile_pic, ' +
-                                            'fec_registro) VALUES ($1, $2, $3, $4, $5)';
+                                        let sql = 'INSERT INTO chatbot_usuarios (fb_id, nombres, apellidos, imagen_perfil, ' +
+                                            'fecha_registro) VALUES ($1, $2, $3, $4, $5)';
                                         client.query(sql, [
                                             userId,
                                             user.first_name,
@@ -81,24 +81,21 @@ const addUser = function(callback, userId) {
     });
 }
 
-const readAllUsers = (callback) => {
+const usersList = (callback) => {
     var pool = new pg.Pool(config.PG_CONFIG);
-    pool.connect(function(err, client, done) {
+    pool.connect(function (err, client, done) {
         if (err) {
             return console.error('Error acquiring client', err.stack);
         }
-        console.log('Se entro a readAllUsers de user.js');
         client
             .query(
-                'SELECT fb_id, first_name, last_name FROM users WHERE newsletter=1',
-                function(err, result) {
+                'SELECT fb_id, nombres as first_name, apellidos as last_name,fecha_registro as date, estado_politicas_privacidad,hoja_informativa  FROM chatbot_usuarios',
+                function (err, result) {
                     if (err) {
                         console.log(err);
-                        callback([]);
+                        callback(err);
                     } else {
-                        console.log('rows');
-                        console.log(result.rows);
-                        callback(result.rows);
+                        callback(null, result.rows);
                     };
                     done();
                 });
@@ -107,16 +104,16 @@ const readAllUsers = (callback) => {
     //pool.end();
 }
 
-const getPrivacyPolicyStatus = function(userId, callback) {
+const getPrivacyPolicyStatus = function (userId, callback) {
     var pool = new pg.Pool(config.PG_CONFIG);
-    pool.connect(function(err, client, done) {
+    pool.connect(function (err, client, done) {
         if (err) {
             return console.error('Error acquiring client', err.stack);
         }
         client
             .query(
-                `select privacy_policy_status from users where fb_id='${userId}'`,
-                function(err, result) {
+                `select as estado_politicas_privacidad as privacy_policy_status from chatbot_usuarios where fb_id='${userId}'`,
+                function (err, result) {
                     if (err) {
                         console.log(err);
                         callback(err);
@@ -133,14 +130,14 @@ const getPrivacyPolicyStatus = function(userId, callback) {
 const updatePrivacyPolicyStatus = (userId) => {
     return new Promise((resolve, reject) => {
         var pool = new pg.Pool(config.PG_CONFIG);
-        pool.connect(function(err, client, done) {
+        pool.connect(function (err, client, done) {
             if (err) {
                 return console.error('Error acquiring client', err.stack);
             }
             client
                 .query(
-                    `update users set privacy_policy_status=true where fb_id='${userId}'`,
-                    function(err, result) {
+                    `update chatbot_usuarios set estado_politicas_privacidad=true where fb_id='${userId}'`,
+                    function (err, result) {
                         if (err) {
                             console.log(err);
                             reject(err);
@@ -156,7 +153,7 @@ const updatePrivacyPolicyStatus = (userId) => {
 
 module.exports = {
     addUser,
-    readAllUsers,
+    usersList,
     getPrivacyPolicyStatus,
     updatePrivacyPolicyStatus
 }

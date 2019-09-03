@@ -67,6 +67,17 @@
                   ></v-textarea>
                 </v-col>
               </v-row>
+              <v-row justify="center">
+                <v-col cols="11">
+                  <v-textarea
+                    placeholder="Ingresa una variante a la respuesta"
+                    @keyup.enter="addResponseVariant(multipleMessage.text.text,responseVariant)"
+                    rows="1"
+                    v-model="responseVariant"
+                    auto-grow
+                  ></v-textarea>
+                </v-col>
+              </v-row>
             </v-container>
           </div>
           <div v-if="multipleMessage.hasOwnProperty('payload')">
@@ -136,6 +147,7 @@ export default {
   },
   data() {
     return {
+      responseVariant: "",
       rerender: false,
       intent: null,
       newTrainingPhrase: "",
@@ -146,6 +158,10 @@ export default {
     this.initialData();
   },
   methods: {
+    addResponseVariant(responses, responseVariant) {
+      responses.push(responseVariant);
+      this.responseVariant = "";
+    },
     rerenderComponents() {
       console.log("renderizar de nuevo");
       this.rerender = true;
@@ -197,18 +213,18 @@ export default {
     },
     saveIntent(newIntent) {
       this.$store.dispatch("showOverlay", {
-            active: true,
-            text: "Actualizando"
-          });
+        active: true,
+        text: "Actualizando"
+      });
       axios
         .put("/api/chatbot/agent/intents/update", { newIntent })
         .then(res => {
           console.log(res);
           if (res.data.ok) {
             this.$store.dispatch("showOverlay", {
-            active: false,
-            text: ""
-          });
+              active: false,
+              text: ""
+            });
             this.$store.dispatch("showSnackbar", {
               text: res.data.message,
               color: "success"
@@ -217,12 +233,13 @@ export default {
         })
         .catch(err => {
           console.error(err);
-        }).finally(()=>{
+        })
+        .finally(() => {
           this.$store.dispatch("showOverlay", {
             active: false,
             text: "Actualizando"
           });
-        }) ;
+        });
     },
     addTrainingPhrase(trainingPhrase) {
       this.intent.trainingPhrases.push({

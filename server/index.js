@@ -15,9 +15,9 @@ app.use(bodyParser.urlencoded({
 
 // parse application/json
 app.use(bodyParser.json())
-    // app.use(cors());
-    // CORS middleware
-const allowCrossDomain = function(req, res, next) {
+// app.use(cors());
+// CORS middleware
+const allowCrossDomain = function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', '*');
     res.header('Access-Control-Allow-Headers', '*');
@@ -40,7 +40,7 @@ if (process.env.NODE_ENV === 'production') {
         res.sendFile(__dirname + '/public/index.html')
     });
 }
-process.env.PORT = process.env.PORT || 3000;
+process.env.PORT = process.env.PORT || 8000;
 app.listen(process.env.PORT, () => {
     console.log(`Server starting on port ${process.env.PORT}`);
 });

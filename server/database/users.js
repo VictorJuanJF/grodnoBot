@@ -112,7 +112,7 @@ const getPrivacyPolicyStatus = function (userId, callback) {
         }
         client
             .query(
-                `select as estado_politicas_privacidad as privacy_policy_status from chatbot_usuarios where fb_id='${userId}'`,
+                `select estado_politicas_privacidad as privacy_policy_status from chatbot_usuarios where fb_id='${userId}'`,
                 function (err, result) {
                     if (err) {
                         console.log(err);

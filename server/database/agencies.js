@@ -119,7 +119,7 @@ const listAgenciesByRegion = (region, callback) => {
         }
         client
             .query(
-                `select agencias.nombre as agency_name,direccion as address from agencias inner join regiones on agencias.region=regiones.id where agencias.nombre='${region}'`,
+                `select agencias.nombre as agency_name,direccion as address from agencias inner join regiones on agencias.region=regiones.id where regiones.nombre='${region}'`,
                 function (err, result) {
                     if (err) {
                         console.log(err);

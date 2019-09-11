@@ -72,6 +72,7 @@ app.use(bodyParser.json());
 const sessionIds = new Map();
 const usersMap = new Map();
 const privacyPolicy = new Map();
+const documentNumbers = new Map();
 
 const credentials = {
     client_email: config.GOOGLE_CLIENT_EMAIL,
@@ -90,7 +91,7 @@ const sessionClient = new dialogflow.SessionsClient({
 // })
 
 // for Facebook verification
-router.get('/webhook/', function(req, res) {
+router.get('/webhook/', function (req, res) {
     console.log("se entro al webhook de app");
     console.log("request");
     if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === config.FB_VERIFY_TOKEN) {
@@ -108,7 +109,7 @@ router.get('/webhook/', function(req, res) {
  * https://developers.facebook.com/docs/messenger-platform/product-overview/setup#subscribe_app
  *
  */
-router.post('/webhook/', function(req, res) {
+router.post('/webhook/', function (req, res) {
     var data = req.body;
     console.log(JSON.stringify(data));
 
@@ -118,12 +119,12 @@ router.post('/webhook/', function(req, res) {
     if (data.object == 'page') {
         // Iterate over each entry
         // There may be multiple if batched
-        data.entry.forEach(function(pageEntry) {
+        data.entry.forEach(function (pageEntry) {
             var pageID = pageEntry.id;
             var timeOfEvent = pageEntry.time;
 
             // Iterate over each messaging event
-            pageEntry.messaging.forEach(function(messagingEvent) {
+            pageEntry.messaging.forEach(function (messagingEvent) {
                 if (messagingEvent.optin) {
                     receivedAuthentication(messagingEvent);
                 } else if (messagingEvent.message) {
@@ -169,6 +170,7 @@ function setSessionAndUser(senderID, callback) {
         console.log("no paso nada y se mando callback true");
         callback(true);
     }
+    console.log("se termino el setUser");
 }
 
 function verifyPrivacyPolicy(senderID) {
@@ -188,6 +190,33 @@ function verifyPrivacyPolicy(senderID) {
                     console.log("estado de las politicas: ", privacyPolicy.get(senderID));
 
                     resolve(privacyPolicy.get(senderID));
+                }
+
+            });
+        }
+    });
+}
+
+function verifyDocumentNum(senderID) {
+    console.log("se empezara a verificar el dni");
+    return new Promise((resolve, reject) => {
+        if (documentNumbers.has(senderID)) {
+            console.log("el usuario estaba registrado en map y se envio: ", documentNumbers.get(senderID));
+            resolve(documentNumbers.get(senderID));
+        } else {
+            console.log("el usuario no estaba en map y se procedio a buscar en la bd");
+            userService.getDocumentNum(senderID, (err, res) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    console.log("en el map se colocara: ", res);
+                    if (isDefined(res)) {
+                        documentNumbers.set(senderID, res);
+                        console.log("estado del dni es: ", documentNumbers.get(senderID));
+                        resolve(documentNumbers.get(senderID));
+                    } else {
+                        resolve(null);
+                    }
                 }
 
             });
@@ -251,7 +280,7 @@ function handleEcho(messageId, appId, metadata) {
     console.log("Received echo for message %s and app %d with metadata %s", messageId, appId, metadata);
 }
 
-function handleDialogFlowAction(sender, action, messages, contexts, parameters) {
+async function handleDialogFlowAction(sender, action, messages, contexts, parameters) {
     let dynamicResponseIndex = null;
     let dynamicResponse = "";
     let agencyName = null;
@@ -261,16 +290,13 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
         dynamicResponseIndex = messages.findIndex(message => message.text.text[0].includes(agencyName));
     }
     switch (action) {
-        case 'Agencia.listado.region.action':
-            {
-                console.log("llego este parametro: ", parameters);
-                let region = parameters.fields.regions.stringValue;
-                console.log("se enviara la region: ", region);
-                let regionsDictionary = require('../Algorithms/regionsDictionary').entries;
-                levenshtainService.compareStrings(region, regionsDictionary, (regionFinded) => {
-                    if (regionFinded) {
-                        agenciesService.listAgenciesByRegion(regionFinded, (err, agencies) => {
-                            console.log("llegaron estas agencias: ", agencies);
+        case 'Agencia.listado.region.action': {
+            let region = parameters.fields.regions.stringValue;
+            let regionsDictionary = require('../Algorithms/regionsDictionary').entries;
+            levenshtainService.compareStrings(region, regionsDictionary, (regionFinded) => {
+                if (regionFinded) {
+                    agenciesService.listAgenciesByRegion(regionFinded, (err, agencies) => {
+                        console.log("llegaron estas agencias: ", agencies);
                         let agenciesByRegion = "";
                         agencies.forEach((agency, agencyIndex) => {
                             agenciesByRegion += "AGENCIA " + agency.agency_name;
@@ -282,18 +308,18 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
                         let dynamicRespose = "";
                         for (let index = 0; index < messages.length; index++) {
                             const message = messages[index];
-                            dynamicResponse = message.text.text[0].replace(region,regionFinded).replace('$agencias', agenciesByRegion);
+                            dynamicResponse = message.text.text[0].replace(region, regionFinded).replace('$agencias', agenciesByRegion);
                             messages[index].text.text[0] = dynamicResponse;
                         }
                         handleMessages(messages, sender);
                     });
-                        }else {
-                            sendToDialogFlow(sender,"Agencia.listado.region.fallback")
-                        }
-                        
-                });
-                break;
-            }
+                } else {
+                    sendToDialogFlow(sender, "Agencia.listado.region.fallback")
+                }
+
+            });
+            break;
+        }
         case 'horario.action':
             if (agencyName) {
                 agenciesService.listAgencies((err, agencies) => {
@@ -309,18 +335,18 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
                         });
                         levenshtainService.compareStrings(agencyName, agenciesDictionary, (agency) => {
                             if (agency) {
-                               var agency = agencies.find(agencie => agencie.agency_name == agency);
-                            for (let index = 0; index < messages.length; index++) {
-                                const message = messages[index];
-                                dynamicResponse = message.text.text[0].replace(agencyName, agency.agency_name).replace('$direccion', agency.address).replace('$horario', agency.schedule);
-                                messages[index].text.text[0] = dynamicResponse;
-                            }
-                            handleMessages(messages, sender); 
+                                var agency = agencies.find(agencie => agencie.agency_name == agency);
+                                for (let index = 0; index < messages.length; index++) {
+                                    const message = messages[index];
+                                    dynamicResponse = message.text.text[0].replace(agencyName, agency.agency_name).replace('$direccion', agency.address).replace('$horario', agency.schedule);
+                                    messages[index].text.text[0] = dynamicResponse;
+                                }
+                                handleMessages(messages, sender);
                             } else {
                                 console.log("como el valor es menor a 0.6 se entro al mensaje de rechazo");
-                                sendToDialogFlow(sender,"Agencia.horario.fallback");
+                                sendToDialogFlow(sender, "Agencia.horario.fallback");
                             }
-                            
+
                         });
                     }
                 });
@@ -344,17 +370,17 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
                         });
                         levenshtainService.compareStrings(agencyName, agenciesDictionary, (agency) => {
                             if (agency) {
-                               var agency = agencies.find(agencie => agencie.agency_name == agency);
-                            for (let index = 0; index < messages.length; index++) {
-                                const message = messages[index];
-                                dynamicResponse = message.text.text[0].replace(agencyName, agency.agency_name).replace('$direccion', agency.address).replace('$horario', agency.schedule);
-                                messages[index].text.text[0] = dynamicResponse;
-                            }
-                            handleMessages(messages, sender); 
+                                var agency = agencies.find(agencie => agencie.agency_name == agency);
+                                for (let index = 0; index < messages.length; index++) {
+                                    const message = messages[index];
+                                    dynamicResponse = message.text.text[0].replace(agencyName, agency.agency_name).replace('$direccion', agency.address).replace('$horario', agency.schedule);
+                                    messages[index].text.text[0] = dynamicResponse;
+                                }
+                                handleMessages(messages, sender);
                             } else {
-                                sendToDialogFlow(sender,"Agencia.ubicacion.fallback");
+                                sendToDialogFlow(sender, "Agencia.ubicacion.fallback");
                             }
-                            
+
                         });
                     }
                 });
@@ -362,6 +388,29 @@ function handleDialogFlowAction(sender, action, messages, contexts, parameters) 
                 console.log("Por favor, define el parametro $any (nombre de la agencia)");
                 sendTextMessage(sender, "Aún no me enseñaron sobre las ubicaciones de las agencias");
             }
+            break;
+        case 'UsuarioDNI.UsuarioDNI-yes':
+            // let dni = parameters.fields.dni;
+            console.log("el DNI a guardar es: ", contexts[0].parameters.fields.dni.numberValue);
+            let dni = contexts[0].parameters.fields.dni.numberValue;
+            if (dni.toString().length != 8) {
+                sendTextMessage(sender, "El DNI debe contener 8 dígitos");
+                setTimeout(() => {
+                    sendToDialogFlow(sender, "Usuario.DNI.action");
+                }, 1000);
+            } else {
+                await userService.updateDocumentNum(dni.toString(), sender);
+                handleMessages(messages, sender);
+                setTimeout(() => {
+                    sendToDialogFlow(sender, "welcome_intent");
+                }, 1000);
+            }
+            break;
+        case 'Get_started_dni.action':
+            handleMessages(messages, sender);
+            setTimeout(() => {
+                sendToDialogFlow(sender, "Usuario.DNI.action");
+            }, 1000);
             break;
 
         default:
@@ -479,24 +528,30 @@ function handleMessages(messages, sender) {
         } else if (messages[i].message == "card") {
             cardTypes.push(messages[i]);
         } else {
-
             timeout = i * timeoutInterval;
             setTimeout(handleMessage.bind(null, messages[i], sender), timeout);
         }
-
         previousType = messages[i].message;
 
     }
 }
 
-let cantidad = 0;
-
-function handleDialogFlowResponse(sender, response) {
+async function handleDialogFlowResponse(sender, response) {
     let responseText = response.fulfillmentMessages.fulfillmentText;
     let messages = response.fulfillmentMessages;
     let action = response.action;
     let contexts = response.outputContexts;
     let parameters = response.parameters;
+    console.log("el intent activo fue: ", response.intent.displayName);
+    let documentNum = await verifyDocumentNum(sender);
+    console.log("el numero de doc recibido fue: ", documentNum);
+    if (!isDefined(documentNum)) {
+        let intentName = response.intent.displayName;
+        if (intentName != 'Get_started_dni' && intentName != 'Usuario.DNI' && intentName != 'Usuario.DNI - yes') {
+            console.log("no habia dni y se pedira");
+            return sendToDialogFlow(sender, "GET_STARTED");
+        }
+    }
     if (isDefined(action)) {
         handleDialogFlowAction(sender, action, messages, contexts, parameters);
     } else if (isDefined(messages)) {
@@ -512,25 +567,9 @@ function handleDialogFlowResponse(sender, response) {
 async function sendToDialogFlow(sender, textString, params) {
     let textToDialogFlow = textString;
     sendTypingOn(sender);
-    setSessionAndUser(sender, async(callback) => {
+    console.log("se enviara el texto a Dialogflow: ", textString);
+    setSessionAndUser(sender, async (callback) => {
         if (callback) {
-            let status = await verifyPrivacyPolicy(sender);
-            console.log("se recibio un estado de politica de: ", status);
-            if (!status) {
-                console.log("no aceptaste la politica, el estado es: ", status);
-                if (textToDialogFlow != 'si_get_started_payload' && textToDialogFlow != 'no_get_started_payload') {
-                    console.log("se preguntara de nuevo por las politicas");
-                    textToDialogFlow = 'GET_STARTED';
-                    // console.log("mensaje: ", textString);
-                } else if (textToDialogFlow == 'si_get_started_payload') {
-                    console.log("se entro a si_get_started_payload");
-                    await userService.updatePrivacyPolicyStatus(sender);
-                    privacyPolicy.set(sender, true)
-                    setTimeout(() => {
-                        sendToDialogFlow(sender, 'welcome_intent');
-                    }, 1000);
-                }
-            }
             try {
                 const sessionPath = sessionClient.sessionPath(
                     config.GOOGLE_PROJECT_ID,
@@ -875,7 +914,8 @@ function sendAccountLinking(recipientId) {
  * get the message id in a response
  *
  */
-function callSendAPI(messageData) {
+async function callSendAPI(messageData) {
+    let sender = messageData.recipient.id;
     request({
         uri: 'https://graph.facebook.com/v3.2/me/messages',
         qs: {
@@ -883,8 +923,7 @@ function callSendAPI(messageData) {
         },
         method: 'POST',
         json: messageData
-
-    }, function(error, response, body) {
+    }, function (error, response, body) {
         if (!error && response.statusCode == 200) {
             var recipientId = body.recipient_id;
             var messageId = body.message_id;
@@ -984,7 +1023,7 @@ function receivedDeliveryConfirmation(event) {
     var sequenceNumber = delivery.seq;
 
     if (messageIDs) {
-        messageIDs.forEach(function(messageID) {
+        messageIDs.forEach(function (messageID) {
             console.log("Received delivery confirmation for message ID: %s",
                 messageID);
         });
@@ -1058,7 +1097,9 @@ function isDefined(obj) {
     if (!obj) {
         return false;
     }
-
+    if (obj == "") {
+        return false;
+    }
     return obj != null;
 }
 

@@ -7,6 +7,7 @@ pg.defaults.ssl = true;
 
 
 const addUser = function (callback, userId) {
+    console.log("empezando a agregar usuario");
     request({
         uri: 'https://graph.facebook.com/v2.7/' + userId,
         qs: {
@@ -37,6 +38,7 @@ const addUser = function (callback, userId) {
                                     console.log('Query error: ' + err);
 
                                 } else {
+                                    console.log("se empezara a registrar al usuario");
                                     if (result.rows.length === 0) {
                                         console.log('Agregando usuario a bd');
                                         let sql = 'INSERT INTO chatbot_usuarios (fb_id, nombres, apellidos, imagen_perfil, ' +
@@ -151,9 +153,59 @@ const updatePrivacyPolicyStatus = (userId) => {
     });
 }
 
+const getDocumentNum = function (userId, callback) {
+    var pool = new pg.Pool(config.PG_CONFIG);
+    pool.connect(function (err, client, done) {
+        if (err) {
+            return console.error('Error acquiring client', err.stack);
+        }
+        client
+            .query(
+                `select num_documento from chatbot_usuarios where fb_id='${userId}'`,
+                function (err, result) {
+                    if (err) {
+                        console.log(err);
+                        callback(err);
+                    } else {
+                        console.log("se buscara el fbid=", userId);
+                        console.log("el numero de documento es: ", result.rows[0]);
+                        callback(null, result.rows[0].num_documento);
+                    };
+                    done();
+                });
+
+    });
+}
+
+const updateDocumentNum = (documentNum, userId) => {
+    return new Promise((resolve, reject) => {
+        var pool = new pg.Pool(config.PG_CONFIG);
+        pool.connect(function (err, client, done) {
+            if (err) {
+                return console.error('Error acquiring client', err.stack);
+            }
+            client
+                .query(
+                    `update chatbot_usuarios set num_documento=${documentNum} where fb_id='${userId}'`,
+                    function (err, result) {
+                        if (err) {
+                            console.log(err);
+                            reject(err);
+                        } else {
+                            resolve(true);
+                        };
+                        done();
+                    });
+
+        });
+    });
+}
+
 module.exports = {
     addUser,
     usersList,
     getPrivacyPolicyStatus,
-    updatePrivacyPolicyStatus
+    updatePrivacyPolicyStatus,
+    getDocumentNum,
+    updateDocumentNum
 }

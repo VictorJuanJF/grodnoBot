@@ -91,7 +91,7 @@ const usersList = (callback) => {
         }
         client
             .query(
-                'SELECT fb_id, nombres as first_name, apellidos as last_name,fecha_registro as date, estado_politicas_privacidad,hoja_informativa  FROM chatbot_usuarios',
+                'SELECT fb_id, nombres as first_name, apellidos as last_name,fecha_registro as date, estado_politicas_privacidad,hoja_informativa,num_documento as document_num  FROM chatbot_usuarios',
                 function (err, result) {
                     if (err) {
                         console.log(err);

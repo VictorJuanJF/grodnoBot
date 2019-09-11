@@ -9,9 +9,9 @@
       :loading="users.length==0"
       loading-text="Cargando usuarios del chatbot"
     >
-      <template v-slot:item.estado_politicas_privacidad="{item}">
-        <v-chip v-if="item.estado_politicas_privacidad" color="success">Aceptó</v-chip>
-        <v-chip v-else color="error">No aceptó</v-chip>
+      <template v-slot:item.document_num="{item}">
+        <v-chip v-if="!item.document_num" color="error">Falta</v-chip>
+        <p v-else>{{item.document_num}}</p>
       </template>
       <template v-slot:item.hoja_informativa="{item}">
         <p v-if="!item.hoja_informativa">Por definir</p>
@@ -34,10 +34,9 @@ export default {
         { text: "ID de Facebook", value: "fb_id" },
         { text: "Fecha de Registro", value: "date" },
         {
-          text: "Estado de políticas de privacidad",
-          value: "estado_politicas_privacidad"
-        },
-        { text: "Hoja informativa", value: "hoja_informativa" }
+          text: "DNI",
+          value: "document_num"
+        }
       ],
       users: []
     };

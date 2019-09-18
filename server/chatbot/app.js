@@ -92,8 +92,6 @@ const sessionClient = new dialogflow.SessionsClient({
 
 // for Facebook verification
 router.get('/webhook/', function (req, res) {
-    console.log("se entro al webhook de app");
-    console.log("request");
     if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === config.FB_VERIFY_TOKEN) {
         res.status(200).send(req.query['hub.challenge']);
     } else {
@@ -111,10 +109,6 @@ router.get('/webhook/', function (req, res) {
  */
 router.post('/webhook/', function (req, res) {
     var data = req.body;
-    console.log(JSON.stringify(data));
-
-
-
     // Make sure this is a page subscription
     if (data.object == 'page') {
         // Iterate over each entry
